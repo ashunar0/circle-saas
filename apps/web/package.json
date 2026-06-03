@@ -7,9 +7,11 @@
     "dev": "vite"
   },
   "dependencies": {
+    "@circle/api": "workspace:*",
     "@heroui/react": "^3.1.0",
     "@heroui/styles": "^3.1.0",
     "@tanstack/react-router": "^1.170.11",
+    "hono": "^4.12.23",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "tailwind-variants": "^3.2.2"

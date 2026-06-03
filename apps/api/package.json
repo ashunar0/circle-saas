@@ -4,6 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "echo 'TODO step 0.2'"
+    "dev": "bun --hot src/index.ts"
+  },
+  "dependencies": {
+    "hono": "^4.12.23"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.14"
   }
 }

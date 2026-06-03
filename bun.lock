@@ -1,0 +1,33 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 1,
+  "workspaces": {
+    "": {
+      "name": "circle-saas",
+      "devDependencies": {
+        "typescript": "^5.7.0",
+      },
+    },
+    "apps/api": {
+      "name": "@circle/api",
+      "version": "0.0.0",
+    },
+    "apps/web": {
+      "name": "@circle/web",
+      "version": "0.0.0",
+    },
+    "packages/shared": {
+      "name": "@circle/shared",
+      "version": "0.0.0",
+    },
+  },
+  "packages": {
+    "@circle/api": ["@circle/api@workspace:apps/api"],
+
+    "@circle/shared": ["@circle/shared@workspace:packages/shared"],
+
+    "@circle/web": ["@circle/web@workspace:apps/web"],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+  }
+}

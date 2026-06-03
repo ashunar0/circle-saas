@@ -1,0 +1,14 @@
+{
+  "name": "circle-saas",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev:api": "bun --filter @circle/api dev",
+    "dev:web": "bun --filter @circle/web dev",
+    "dev": "bun --filter '*' dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  }
+}

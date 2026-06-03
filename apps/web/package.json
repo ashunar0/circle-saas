@@ -1,0 +1,9 @@
+{
+  "name": "@circle/web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "echo 'TODO step 0.3'"
+  }
+}

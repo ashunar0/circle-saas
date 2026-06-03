@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Button } from "@heroui/react";
 
 export const Route = createFileRoute("/")({
   component: HomePage,
@@ -6,9 +7,12 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   return (
-    <div>
-      <h1>Circle SaaS</h1>
-      <p>Phase 0.4: TanStack Router file-based が動いてる証跡</p>
+    <div className="p-8">
+      <h1 className="text-2xl font-bold">Circle SaaS</h1>
+      <p className="text-gray-600 mb-4">
+        Phase 0.5: Tailwind v4 + HeroUI v3 が動いてる証跡
+      </p>
+      <Button variant="primary">Click me</Button>
     </div>
   );
 }

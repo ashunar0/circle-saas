@@ -22,3 +22,6 @@ build/
 .cache/
 .turbo/
 .parcel-cache/
+
+# notes (not tracked)
+docs/

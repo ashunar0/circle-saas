@@ -1,12 +1,23 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { centralDb } from "../db/central";
+import * as schema from "../db/schema";
+
+const secret = process.env.BETTER_AUTH_SECRET;
+if (!secret) {
+  throw new Error("BETTER_AUTH_SECRET is required");
+}
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID;
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
 export const auth = betterAuth({
-  database: drizzleAdapter(centralDb, { provider: "sqlite" }),
+  secret,
+  database: drizzleAdapter(centralDb, {
+    provider: "sqlite",
+    schema,
+    transaction: true,
+  }),
   emailAndPassword: {
     enabled: true,
   },

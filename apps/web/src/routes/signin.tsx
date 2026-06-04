@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Button } from "@heroui/react";
 import { useState } from "react";
 import { signIn } from "@/lib/auth";
-import { FormField } from "@/features/auth/components/FormField";
+import { FormField } from "@/components/FormField";
 
 const schema = z.object({
   email: z.string().email("Invalid email"),

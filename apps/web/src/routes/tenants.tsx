@@ -34,13 +34,10 @@ function TenantsPage() {
     defaultValues: { name: "", slug: "" },
   });
 
-  const onSubmit = async (values: CreateOrgInput) => {
-    try {
-      await createOrg.mutateAsync(values);
-      reset();
-    } catch {
-      // createOrg.error から表示
-    }
+  const onSubmit = (values: CreateOrgInput) => {
+    createOrg.mutate(values, {
+      onSuccess: () => reset(),
+    });
   };
 
   return (

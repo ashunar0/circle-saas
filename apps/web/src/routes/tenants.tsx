@@ -31,6 +31,7 @@ export const Route = createFileRoute("/tenants")({
 function TenantsPage() {
   const [orgs, setOrgs] = useState<Org[]>([]);
   const [loading, setLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -45,9 +46,19 @@ function TenantsPage() {
 
   const refresh = async () => {
     setLoading(true);
-    const { data } = await authClient.organization.list();
-    setOrgs((data ?? []) as Org[]);
-    setLoading(false);
+    setListError(null);
+    try {
+      const { data, error } = await authClient.organization.list();
+      if (error) {
+        setListError(error.message ?? "サークル一覧の取得に失敗しました");
+        return;
+      }
+      setOrgs((data ?? []) as Org[]);
+    } catch (err) {
+      setListError(err instanceof Error ? err.message : "ネットワークエラー");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -74,6 +85,8 @@ function TenantsPage() {
           <h2 className="text-lg font-semibold">所属しているサークル</h2>
           {loading ? (
             <p className="text-default-500">読み込み中…</p>
+          ) : listError ? (
+            <p className="text-sm text-danger">{listError}</p>
           ) : orgs.length === 0 ? (
             <p className="text-default-500">まだサークルがありません</p>
           ) : (

@@ -1,11 +1,19 @@
 import { Hono } from "hono";
 import { auth } from "./lib/auth";
 import { redactOrgSecrets } from "./lib/middleware/redact-org-secrets";
+import { resolveTenant } from "./lib/middleware/tenant";
 
 const app = new Hono()
   .use("/api/auth/organization/*", redactOrgSecrets)
   .on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
-  .get("/api/ping", (c) => c.json({ ok: true }));
+  .get("/api/ping", (c) => c.json({ ok: true }))
+  .use("/api/t/:tenantId/*", resolveTenant)
+  .get("/api/t/:tenantId/whoami", (c) =>
+    c.json({
+      organizationId: c.get("organizationId"),
+      role: c.get("role"),
+    }),
+  );
 
 export type AppType = typeof app;
 export default app;

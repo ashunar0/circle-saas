@@ -291,13 +291,17 @@ Feature 内の schema は **app 内 only** なら `apps/{api,web}/src/features/*
 
 ### 4.2 Central DB / Tenant DB の分離
 
-**Central DB** (1 個、全テナント共通):
+**Central DB** (1 個、全テナント共通) ─ サークル単位の自前 table は **better-auth organizations plugin** が自動生成する (`organization` / `member` / `invitation`)。Tenant DB の接続情報は `organization` table の `additionalFields` として相乗りさせる。詳細は [ADR 005](./decisions/005-multi-tenant-strategy.md):
 
 ```
-users          (id, email, name, password_hash, created_at)
-tenants        (id, name, db_url, db_token, plan, created_at)
-memberships    (id, user_id, tenant_id, role, created_at)
-invites        (id, tenant_id, token, expires_at, created_by)
+user           (id, email, name, ...)             # better-auth core
+session        (id, userId, ...)                  # better-auth core
+account        (id, userId, providerId, ...)      # better-auth core (OAuth)
+organization   (id, name, slug,                   # better-auth organizations plugin
+                dbName, dbUrl, dbToken)           #   ↑ additionalFields (Tenant DB 接続)
+member         (id, userId, organizationId, role) # better-auth organizations plugin
+invitation     (id, organizationId, email,        # better-auth organizations plugin
+                role, status, expiresAt, inviterId)
 billing_*      (v1.1+)
 ```
 
@@ -316,10 +320,10 @@ categories     (id, name)    # MVP は固定 default
 
 ```
 1. Cookie から session を取得 (better-auth)
-2. session から user_id を解決
-3. URL の path (/api/t/:tenantId/*) から tenant_id を取得
-4. Central DB の memberships で (user_id, tenant_id) を validate
-5. tenants から該当 tenant の db_url + db_token を取得
+2. session から userId を解決
+3. URL の path (/api/t/:tenantId/*) から organizationId (= tenantId) を取得
+4. Central DB の member で (userId, organizationId) を validate
+5. organization から該当 org の dbUrl + dbToken を取得 (additionalFields)
 6. Tenant DB の Drizzle client を生成して c.set('tenantDb', ...)
 7. 後続 handler は c.get('tenantDb') を使って data 操作
 ```
@@ -328,61 +332,74 @@ categories     (id, name)    # MVP は固定 default
 
 ```typescript
 app.use("/api/t/:tenantId/*", async (c, next) => {
-  const session = await getSession(c);
-  const tenantId = c.req.param("tenantId");
+  const session = await auth.api.getSession({ headers: c.req.raw.headers });
+  if (!session) throw new HTTPException(401);
 
-  const membership = await centralDb.query.memberships.findFirst({
+  const organizationId = c.req.param("tenantId");
+
+  const membership = await centralDb.query.member.findFirst({
     where: and(
-      eq(memberships.userId, session.userId),
-      eq(memberships.tenantId, tenantId),
+      eq(member.userId, session.user.id),
+      eq(member.organizationId, organizationId),
     ),
   });
   if (!membership) throw new HTTPException(403);
 
-  const tenant = await centralDb.query.tenants.findFirst({
-    where: eq(tenants.id, tenantId),
+  const org = await centralDb.query.organization.findFirst({
+    where: eq(organization.id, organizationId),
   });
-  c.set("tenantDb", createTenantDb(tenant.dbUrl, tenant.dbToken));
+  c.set("tenantDb", createTenantDb(org.dbUrl, org.dbToken));
   c.set("role", membership.role);
   await next();
 });
 ```
 
-### 4.4 Migration 戦略
+> [!NOTE]
+> better-auth は session に "active organization" を乗せる機能も持つので、URL path の代わりに `session.activeOrganizationId` を使うパターンも選べる。MVP は URL pattern (`/api/t/:tenantId/*`) を採用 ─ RESTful で deep link / bookmark に強いため。
 
-**新規 tenant DB 作成時** (サインアップ / サークル作成時):
+### 4.4 Migration 戦略 (Turso schema database pattern)
 
-1. Turso API で `turso db create tenant-<uuid>`
-2. 最新 schema の SQL を loop apply
-3. `tenants` に db_url + db_token を保存
+ADR 005 で採用した **Turso schema database pattern** に乗る。schema 専用の parent DB を 1 個用意し、各 tenant DB を child として作成すると schema が物理的に共有される。schema 変更は parent DB に流すだけで全 child に伝播。
 
-**schema 変更時** (新 migration):
-
-1. drizzle-kit で migration SQL 生成
-2. script で全 tenant_db_url を iterate
-3. 各 DB に migration を apply
-4. 失敗時は進捗を残して retry 可能に
-
-擬似コード:
+**新規 tenant DB 作成時** (サークル作成 = `POST /api/auth/organization/create` の `afterCreate` hook):
 
 ```typescript
-async function applyMigrationToAllTenants(migrationSql: string) {
-  const allTenants = await centralDb.query.tenants.findMany();
-  for (const tenant of allTenants) {
-    const client = createClient({
-      url: tenant.dbUrl,
-      authToken: tenant.dbToken,
-    });
-    try {
-      await client.execute(migrationSql);
-      console.log(`✓ migrated ${tenant.name}`);
-    } catch (e) {
-      console.error(`✗ failed ${tenant.name}:`, e);
-      // 進捗を残しつつ次へ、後で retry
-    }
-  }
+import { createClient as createTursoClient } from "@tursodatabase/api";
+
+const turso = createTursoClient({
+  org: process.env.TURSO_ORG_SLUG!,
+  token: process.env.TURSO_PLATFORM_API_TOKEN!,
+});
+
+async function provisionTenantDb(slug: string) {
+  const dbName = `tenant-${slug}-${shortId()}`;
+  // schema parent から child を作成 → schema 自動継承
+  await turso.databases.create(dbName, {
+    schema: process.env.TURSO_TENANT_SCHEMA_PARENT!,
+    group: "default",
+  });
+  const { token } = await turso.databases.createToken(dbName, {
+    expiration: "never",
+    authorization: "full-access",
+  });
+  return {
+    dbName,
+    dbUrl: `libsql://${dbName}-${process.env.TURSO_ORG_SLUG}.turso.io`,
+    dbToken: token,
+  };
 }
 ```
+
+**schema 変更時** (Tenant DB):
+
+```sh
+# parent DB に対して drizzle-kit を流す → child 全部に自動伝播
+cd apps/api
+DATABASE_URL=$TURSO_TENANT_SCHEMA_PARENT_URL bun run db:generate
+DATABASE_URL=$TURSO_TENANT_SCHEMA_PARENT_URL bun run db:push
+```
+
+migration loop / 進捗管理 / retry script は不要。dev / prod で異なる parent DB を持ち、prod parent への migration は staging で事前検証する運用。
 
 ## 5. 認証フロー
 
@@ -408,22 +425,25 @@ async function applyMigrationToAllTenants(migrationSql: string) {
     → session 削除 → cookie clear
 ```
 
-### 5.3 招待リンクフロー
+### 5.3 招待リンクフロー (better-auth organizations plugin)
+
+ADR 005 で採用した plugin の invitation API に乗る。`invitation` table / API endpoint / token 生成 / 有効期限管理は plugin が面倒見る。
 
 ```
-[招待リンク発行] (会計ロールが実行)
-  POST /api/t/:tenantId/invites
-    → token 生成 (有効期限付き、例: 30 日)
-    → 招待 URL 返却 (例: https://app/invite/{token})
+[招待リンク発行] (会計 role 以上)
+  POST /api/auth/organization/invite-member
+    body: { email, role, organizationId }
+    → invitation レコード作成、token 発行、招待 URL 返却
 
 [招待リンク経由参加]
-  GET /api/invites/:token/info
-    → token validate、tenant 情報返却 (未ログインでもOK)
-  POST /api/invites/:token/accept (要 session)
-    → memberships に user + tenant 追加 (role: member)
+  GET /api/auth/organization/get-invitation?id={invitationId}
+    → token validate、organization 情報返却 (未ログインでもOK)
+  POST /api/auth/organization/accept-invitation (要 session)
+    body: { invitationId }
+    → member レコード作成 (role: 招待時に指定したもの)
 ```
 
-未ログインでの URL アクセス時は `signup` → `accept` の二段フロー。
+未ログインでの URL アクセス時は `signup` → `accept-invitation` の二段フロー。FE 側で sessionStorage に invitationId を退避してから auth flow に飛ばす。
 
 ## 6. データフロー (立替申請のシーケンス)
 

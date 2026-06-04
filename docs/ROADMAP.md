@@ -152,11 +152,11 @@ SaaS 練習目的の core 要素なので必須。
 
 ## 6. 落とし穴と対策
 
-### 6.1 better-auth organizations を DB per tenant 化
+### 6.1 ~~better-auth organizations を DB per tenant 化~~ (✅ ADR 005 で解消)
 
-- **問題**: better-auth organizations plugin は前提として "全 tenant data が同一 DB" 想定
-- **対策**: organizations table は Central DB に置きつつ、各 tenant data は別 DB に切り出す mixed pattern。tenant 切替時に Tenant DB を attach、cross-tenant 不可な層を明確に
-- **Phase**: 2 で設計
+- **当初の懸念**: better-auth organizations plugin は "全 tenant data が同一 DB" 想定
+- **解消**: `additionalFields` で `organization` table に `dbName / dbUrl / dbToken` を持たせて、organization 作成 hook (`afterCreate`) で Turso platform API を叩いて Tenant DB を programmatic に作成する方針に確定 ([ADR 005](./decisions/005-multi-tenant-strategy.md))
+- **残課題**: Tenant DB 作成失敗時の rollback (orphan organization が残らないように compensating action 必要)
 
 ### 6.2 Turso DB programmatic 作成の rate limit
 
@@ -164,11 +164,11 @@ SaaS 練習目的の core 要素なので必須。
 - **対策**: dev では 1-2 tenant で確認、本番は throttle + retry queue
 - **Phase**: 2
 
-### 6.3 Migration を全 tenant DB に流す pattern
+### 6.3 ~~Migration を全 tenant DB に流す pattern~~ (✅ ADR 005 で解消)
 
-- **問題**: schema 変更時に全 tenant DB に適用が必要、失敗 / 中断時の handle
-- **対策**: idempotent な migration、進捗を `tenants` table に記録、retry script
-- **Phase**: 3 で確立
+- **当初の懸念**: schema 変更時に全 tenant DB に loop apply、失敗 / 中断時の進捗管理 / retry
+- **解消**: Turso schema database pattern (DB 作成時に `schema: "<parent>"` を指定すると schema が物理共有) を採用。migration は schema parent DB に流すだけで全 child に伝播 ([ADR 005](./decisions/005-multi-tenant-strategy.md))
+- **残課題**: schema parent DB への migration を誤ると全 tenant に波及するため、staging parent での事前検証を運用に組み込む
 
 ### 6.4 TanStack Router file-based + Hono RPC の型推論負荷
 

@@ -169,10 +169,11 @@ bun run db:studio        # drizzle-kit studio (DB GUI)
 - **CI**: GitHub Actions で push & PR に `bun run typecheck` が走る (`.github/workflows/ci.yml`)。**直 push でも main に CI は走る**
 - **Self-review**: PR 立てたら自分で diff を一度通読してから merge
 - **Merge 戦略**: PR は **rebase merge** (atomic な commit 履歴を main に linear に残す)。merge 後は `--delete-branch` で remote branch も整理
-- **AI review 運用** (PR 経由の時のみ):
-  - 実装系 (普通): merge 前に `/code-review` (medium effort) を Claude が会話の中で実行
-  - 実装系 (大型 / 危険 / security touch / DB schema 変更 / リファクタ): あさひが `/ultrareview <PR#>` を手動起動
-  - 判断軸: LoC 100行超え or 複雑 logic は AI review 入れる、auth / payment / file upload / RBAC は必ず、迷ったら厚め
+- **AI review 運用** (Phase 3 で運用見直し):
+  - **default は self-review 一本**。あさひが PR の diff を GitHub UI で通読して OK なら merge
+  - 第二の目が欲しい時だけ Claude が `feature-dev:code-reviewer` subagent を Agent tool で 1 発呼ぶ (skill 経由じゃなく直接)
+  - ほんとに重い PR (auth まるごと書き換え / payment / RBAC 大幅変更 等) のときだけ あさひが `/ultrareview <PR#>` を手動起動
+  - `/code-review` skill は **使わない** (Phase 3 で xhigh が走って ROI が悪かった経緯。詳細は memory `feedback-code-review-policy`)
 
 ## brain (Obsidian vault) との関係
 

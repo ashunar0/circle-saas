@@ -102,6 +102,8 @@ export const organization = sqliteTable("organization", {
   dbName: text("db_name"),
   dbUrl: text("db_url"),
   dbToken: text("db_token"),
+  schemaVersion: integer("schema_version").default(0).notNull(),
+  lastMigratedAt: integer("last_migrated_at", { mode: "timestamp_ms" }),
 });
 
 export const member = sqliteTable(

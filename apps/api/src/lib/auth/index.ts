@@ -35,6 +35,8 @@ export const auth = betterAuth({
             dbName: { type: "string", required: false, input: false },
             dbUrl: { type: "string", required: false, input: false },
             dbToken: { type: "string", required: false, input: false },
+            schemaVersion: { type: "number", required: false, input: false },
+            lastMigratedAt: { type: "date", required: false, input: false },
           },
         },
       },

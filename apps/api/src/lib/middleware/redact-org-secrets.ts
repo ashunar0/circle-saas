@@ -30,6 +30,7 @@ export const redactOrgSecrets: MiddlewareHandler = async (c, next) => {
 
   const redacted = redactSecrets(body);
   const headers = new Headers(c.res.headers);
+  headers.delete("content-length");
   c.res = new Response(JSON.stringify(redacted), {
     status: c.res.status,
     statusText: c.res.statusText,

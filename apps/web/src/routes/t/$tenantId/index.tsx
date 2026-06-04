@@ -23,15 +23,22 @@ function TenantPage() {
   useEffect(() => {
     let canceled = false;
     const fetchWhoami = async () => {
-      const res = await api.api.t[":tenantId"].whoami.$get({
-        param: { tenantId },
-      });
-      if (!res.ok) {
-        if (!canceled) setError(`HTTP ${res.status}`);
-        return;
+      try {
+        const res = await api.api.t[":tenantId"].whoami.$get({
+          param: { tenantId },
+        });
+        if (!res.ok) {
+          const text = await res.text().catch(() => "");
+          if (!canceled) setError(text || `HTTP ${res.status}`);
+          return;
+        }
+        const data = await res.json();
+        if (!canceled) setMe(data);
+      } catch (err) {
+        if (!canceled) {
+          setError(err instanceof Error ? err.message : "ネットワークエラー");
+        }
       }
-      const data = await res.json();
-      if (!canceled) setMe(data);
     };
     fetchWhoami();
     return () => {

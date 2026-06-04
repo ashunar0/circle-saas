@@ -5,7 +5,7 @@ import { z } from "zod";
 import { Button } from "@heroui/react";
 import { useState } from "react";
 import { signUp, signIn } from "@/lib/auth";
-import { FormField } from "@/features/auth/components/FormField";
+import { FormField } from "@/components/FormField";
 
 const schema = z.object({
   name: z.string().min(1, "Name is required"),

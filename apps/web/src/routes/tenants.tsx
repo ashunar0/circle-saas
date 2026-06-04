@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@heroui/react";
 import { authClient } from "@/lib/auth";
-import { FormField } from "@/features/auth/components/FormField";
+import { FormField } from "@/components/FormField";
 import { useCreateOrg, useOrgs } from "@/features/tenants/hooks";
 import {
   createOrgInput,

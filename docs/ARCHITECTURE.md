@@ -148,9 +148,9 @@ apps/web/
 │   │   ├── api.ts              # Hono RPC client
 │   │   ├── query.ts            # TanStack Query setup
 │   │   └── auth.ts
+│   ├── components/             # 複数 feature から使う汎用 UI (FormField 等)
 │   └── features/
 │       ├── auth/
-│       │   ├── components/
 │       │   ├── hooks.ts
 │       │   └── schema.ts
 │       ├── tenants/

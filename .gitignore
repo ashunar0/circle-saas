@@ -23,5 +23,8 @@ build/
 .turbo/
 .parcel-cache/
 
+# playwright
+.playwright-mcp/
+
 # docs/ は基本 track、memo だけ除外
 docs/memo/

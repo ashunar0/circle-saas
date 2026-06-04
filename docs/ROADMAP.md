@@ -56,13 +56,14 @@ v2+  ─ OCR / 年度引継ぎ / 決算PDF / 通知 / role 拡張 / カテゴリ
 
 **DOD**: ユーザーが複数サークル所属できる、切替できる、各 tenant DB が物理的に独立
 
-### Phase 3: Tenant DB schema
+### Phase 3: Tenant DB schema ✅ (完了 2026-06-04)
 
 - Tenant DB schema: `expenses` / `expense_events` / `categories`
-- migration を全 tenant DB に loop apply するスクリプト
-- seed (dev で 1-2 tenant に sample data)
+- migration を全 tenant DB に loop apply するスクリプト (`db:migrate:tenants`)
+- 新規 tenant 作成時に migration + default 5 categories を自動適用 (auth hook)
+- dev seed (`db:seed:tenant`) で sample expenses を投入
 
-**DOD**: 全 tenant DB に schema 適用、seed 投入確認
+**Done**: 全 tenant DB に schema 適用 / categories 5 件 seed / sample expenses + events 動作確認済み。
 
 ### Phase 4: 立替申請ワークフロー ★ MVP 核心
 

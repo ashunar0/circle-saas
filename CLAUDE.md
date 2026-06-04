@@ -120,9 +120,14 @@ bun run db:studio        # drizzle-kit studio (DB GUI)
   - ADR 001-004 で設計判断 (better-auth / DB session + httpOnly cookie / email verification は Phase 6 / email+password + Google OAuth)
   - email+password & Google OAuth で sign in/up、`/dashboard` protected route、sign out
   - dev 用 process 第一弾 (PR / ADR / CI typecheck / AI review) を併走で導入
-- ⬜ **Phase 2**: Multi-tenant (DB per tenant、Turso API で programmatic DB 作成 + middleware) ← **次ここから**
-- ⬜ Phase 3: Tenant DB schema (`features/expenses/db.ts` 等、migration loop)
-- ⬜ Phase 4: 立替申請ワークフロー (★ MVP 核心)
+- ✅ **Phase 2**: Multi-tenant ─ 完了 2026-06-04
+  - ADR 005-007 で設計判断 (better-auth organizations + additionalFields / Turso schema database 取り下げ → loop apply / redact middleware)
+  - サークル作成 → Turso platform API で Tenant DB を物理作成、`resolveTenant` middleware で member 検証 + Tenant DB attach、機密 redact 中継
+  - 案 B 運用導入 (実コード = PR、doc/ADR/chore = main 直 push)
+- ✅ **Phase 3**: Tenant DB schema ─ 完了 2026-06-04
+  - `expenses` / `expense_events` / `categories` テーブル定義 + loop apply runner (`db:migrate:tenants`)
+  - 新規 tenant 作成時に migration + default 5 categories を自動適用 + dev seed (`db:seed:tenant`)
+- ⬜ Phase 4: 立替申請ワークフロー (★ MVP 核心) ← **次ここから**
 - ⬜ Phase 5: 一覧 / 集計
 - ⬜ Phase 6: メンバー管理 (招待リンク / role 変更)
 - ⬜ Phase 7: Polish (Toast / validation / empty / loading)
@@ -193,4 +198,4 @@ git ignored。`.env.example` が tracked (placeholder)。
 
 ---
 
-**Next**: Phase 2 (Multi-tenant) から。`docs/ROADMAP.md` の Phase 2 section に方針記載済み。
+**Next**: Phase 4 (立替申請ワークフロー = ★ MVP 核心) から。`docs/ROADMAP.md` の Phase 4 section に方針記載済み。

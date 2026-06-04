@@ -6,11 +6,12 @@
   "scripts": {
     "dev:api": "bun --filter @circle/api dev",
     "dev:web": "bun --filter @circle/web dev",
-    "dev": "bun --filter '*' dev",
+    "dev": "concurrently --names api,web --prefix-colors cyan,magenta 'bun run dev:api' 'bun run dev:web'",
     "typecheck": "bun --filter '*' typecheck"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
+    "concurrently": "^10.0.3",
     "typescript": "^5.7.0"
   }
 }

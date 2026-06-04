@@ -1,14 +1,9 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { authClient } from "@/lib/auth";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { requireSession } from "@/lib/auth";
 import { useWhoami } from "@/features/tenants/hooks";
 
 export const Route = createFileRoute("/t/$tenantId/")({
-  beforeLoad: async () => {
-    const { data: session } = await authClient.getSession();
-    if (!session) {
-      throw redirect({ to: "/signin" });
-    }
-  },
+  beforeLoad: requireSession,
   component: TenantPage,
 });
 

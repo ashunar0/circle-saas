@@ -1,8 +1,8 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@heroui/react";
-import { authClient } from "@/lib/auth";
+import { requireSession } from "@/lib/auth";
 import { FormField } from "@/components/FormField";
 import { OrgList } from "@/features/tenants/components/OrgList";
 import { useCreateOrg, useOrgs } from "@/features/tenants/hooks";
@@ -12,12 +12,7 @@ import {
 } from "@/features/tenants/schema";
 
 export const Route = createFileRoute("/tenants")({
-  beforeLoad: async () => {
-    const { data: session } = await authClient.getSession();
-    if (!session) {
-      throw redirect({ to: "/signin" });
-    }
-  },
+  beforeLoad: requireSession,
   component: TenantsPage,
 });
 

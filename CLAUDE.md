@@ -3,7 +3,8 @@
 サークル会計 SaaS (仮名)。**大学サークル向け立替精算ワークフロー特化のマルチテナント SaaS**。SaaS 固有の仕組み (auth / billing / multi-tenant / onboarding) 習熟が一番の目的。
 
 > 構想・要件・アーキ・ロードマップは `docs/` 配下 (REQUIREMENTS / ARCHITECTURE / ROADMAP)。詳細仕様はここ参照。
-> `docs/` は git ignore (メモ扱い)、track しない。
+> 設計判断は `docs/decisions/` に ADR として残す (`docs/decisions/README.md` 参照)。
+> `docs/` は track 対象。一時メモだけ `docs/memo/` に置いて git ignore。
 
 ## Stack 一覧
 
@@ -70,10 +71,14 @@ apps/web/                  # Vite + React FE (@circle/web)
 
 packages/shared/           # BE/FE 共通の Zod schemas / types (@circle/shared)
 
-docs/                      # メモ (git ignored)
+docs/                      # tracked (memo/ だけ git ignored)
   REQUIREMENTS.md          # 要件定義
   ARCHITECTURE.md          # システム設計詳細
   ROADMAP.md               # Phase 構成 / マイルストーン / 落とし穴
+  decisions/               # ADR (Architecture Decision Records)
+    README.md              # ADR 運用ルール
+    NNN-*.md               # 各設計判断
+  memo/                    # 一時メモ (git ignored)
 ```
 
 ### 3-layer 依存方向 (BE)
@@ -96,6 +101,9 @@ bun run dev
 # 個別
 bun run dev:api          # http://localhost:3000
 bun run dev:web          # http://localhost:5173 (Vite proxy で /api/* → BE)
+
+# 型チェック (CI でも回る)
+bun run typecheck        # 全 workspace に tsc --noEmit
 
 # DB (apps/api 配下で)
 cd apps/api
@@ -145,12 +153,20 @@ bun run db:studio        # drizzle-kit studio (DB GUI)
 - **コーチモード**: ユーザーが「コーチモードで」と言ったら考えさせる stance に切替 (`/Users/a.kawanobe/CLAUDE.md`)
 - **JSX 改行スタイル**: tag 内 props を改行で縦に伸ばすのを嫌う、長いハンドラはインライン展開せず切り出す (memory: `feedback_jsx_style`)
 
+### Process (Phase 1 から導入)
+
+- **Branch / PR**: 機能単位で `feature/phase-N-xxx` を切って、PR 経由で main に merge。直 push は process 系の chore commit のみ
+- **ADR**: 設計判断は `docs/decisions/` に残す (運用ルールは `docs/decisions/README.md`)
+- **PR template**: `.github/PULL_REQUEST_TEMPLATE.md` の What / Why / How tested を埋める
+- **CI**: GitHub Actions で push & PR に `bun run typecheck` が走る (`.github/workflows/ci.yml`)
+- **Self-review**: PR 立てたら自分で diff を一度通読してから merge
+
 ## brain (Obsidian vault) との関係
 
 - **構想・着想メモ・経緯**: brain (`/Users/a.kawanobe/brain/`)
   - `docs/サークル会計SaaS.md` ─ 育てるドキュメント
   - `daily/2026/2026-06-03.md` ─ 構想固めの議論ログ
-- **実装計画 / 詳細仕様**: この repo の `docs/` (git ignored)
+- **実装計画 / 詳細仕様**: この repo の `docs/` (tracked、`memo/` だけ ignored)
 - **進捗スナップショット (auto-memory)**: `project_circle_finance_saas`
 
 ## 環境変数

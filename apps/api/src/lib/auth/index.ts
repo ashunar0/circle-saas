@@ -1,8 +1,11 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization } from "better-auth/plugins";
+import { createClient } from "@libsql/client";
 import { centralDb } from "../db/central";
-import { provisionTenantDb } from "../db/tenant-provisioning";
+import { deleteTenantDb, provisionTenantDb } from "../db/tenant-provisioning";
+import { applyTenantMigrations } from "../db/tenant-migrate";
+import { seedDefaultCategories } from "../../features/categories/seed";
 import * as schema from "../db/schema";
 
 const secret = process.env.BETTER_AUTH_SECRET;
@@ -46,14 +49,39 @@ export const auth = betterAuth({
             throw new Error("organization.slug is required to provision tenant DB");
           }
           const tenant = await provisionTenantDb(organization.slug);
-          return {
-            data: {
-              ...organization,
-              dbName: tenant.dbName,
+          try {
+            const { appliedVersion } = await applyTenantMigrations({
               dbUrl: tenant.dbUrl,
-              dbToken: tenant.dbToken,
-            },
-          };
+              authToken: tenant.dbToken,
+            });
+            const seedClient = createClient({
+              url: tenant.dbUrl,
+              authToken: tenant.dbToken,
+            });
+            try {
+              await seedDefaultCategories(seedClient);
+            } finally {
+              seedClient.close();
+            }
+            return {
+              data: {
+                ...organization,
+                dbName: tenant.dbName,
+                dbUrl: tenant.dbUrl,
+                dbToken: tenant.dbToken,
+                schemaVersion: appliedVersion,
+                lastMigratedAt: new Date(),
+              },
+            };
+          } catch (err) {
+            await deleteTenantDb(tenant.dbName).catch((cleanupErr) => {
+              console.error(
+                `failed to clean up tenant DB ${tenant.dbName} after migration/seed error:`,
+                cleanupErr,
+              );
+            });
+            throw err;
+          }
         },
       },
     }),

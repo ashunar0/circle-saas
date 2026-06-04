@@ -40,9 +40,20 @@ export async function provisionTenantDb(slug: string): Promise<TenantDbInfo> {
     group: "default",
   });
 
-  const tokenResponse = await turso.databases.createToken(dbName, {
-    authorization: "full-access",
-  });
+  let tokenResponse;
+  try {
+    tokenResponse = await turso.databases.createToken(dbName, {
+      authorization: "full-access",
+    });
+  } catch (err) {
+    await deleteTenantDb(dbName).catch((cleanupErr) => {
+      console.error(
+        `failed to clean up orphan tenant DB ${dbName} after token error:`,
+        cleanupErr,
+      );
+    });
+    throw err;
+  }
 
   return {
     dbName,

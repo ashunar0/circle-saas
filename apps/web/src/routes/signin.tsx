@@ -32,12 +32,12 @@ function SignInPage() {
       setSubmitError(error.message ?? "Sign in failed");
       return;
     }
-    navigate({ to: "/" });
+    navigate({ to: "/dashboard" });
   };
 
   const onGoogleSignIn = async () => {
     setSubmitError(null);
-    await signIn.social({ provider: "google", callbackURL: "/" });
+    await signIn.social({ provider: "google", callbackURL: "/dashboard" });
   };
 
   return (

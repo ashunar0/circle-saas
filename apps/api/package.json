@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:generate:tenant": "drizzle-kit generate --config=drizzle.config.tenant.ts",
     "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "db:migrate:tenants": "bun scripts/migrate-tenants.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.3",

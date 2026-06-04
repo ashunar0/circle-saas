@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import type { MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { auth } from "../auth";
-import { member, organization } from "../auth/schema";
+import { member } from "../auth/schema";
 import { centralDb } from "../db/central";
 import { createTenantDb, type TenantDb } from "../db/tenant";
 
@@ -29,13 +29,16 @@ export const resolveTenant: MiddlewareHandler<TenantContext> = async (
       eq(member.userId, session.user.id),
       eq(member.organizationId, tenantId),
     ),
+    with: {
+      organization: {
+        columns: { dbUrl: true, dbToken: true },
+      },
+    },
   });
   if (!membership) throw new HTTPException(403, { message: "not a member" });
 
-  const org = await centralDb.query.organization.findFirst({
-    where: eq(organization.id, tenantId),
-  });
-  if (!org || !org.dbUrl || !org.dbToken) {
+  const { organization: org } = membership;
+  if (!org.dbUrl || !org.dbToken) {
     throw new HTTPException(500, { message: "tenant DB not provisioned" });
   }
 

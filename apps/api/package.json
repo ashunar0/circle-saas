@@ -10,6 +10,7 @@
     "dev": "bun --hot src/index.ts",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
+    "db:generate:tenant": "drizzle-kit generate --config=drizzle.config.tenant.ts",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },

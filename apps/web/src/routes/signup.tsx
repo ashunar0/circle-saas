@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button, Card, CardHeader, CardContent, CardFooter } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { useState } from "react";
 import { signUp, signIn } from "@/lib/auth";
 import { FormField } from "@/features/auth/components/FormField";
@@ -43,35 +43,36 @@ function SignUpPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <h1 className="text-2xl font-bold">Create account</h1>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="gap-4">
-            <FormField control={control} name="name" label="Name" placeholder="Asahi" />
-            <FormField control={control} name="email" label="Email" type="email" placeholder="you@example.com" />
-            <FormField control={control} name="password" label="Password" type="password" />
-            {submitError && <p className="text-sm text-danger">{submitError}</p>}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
+      <div className="w-full max-w-sm flex flex-col gap-8">
+        <h1 className="text-2xl font-bold">Create account</h1>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <FormField control={control} name="name" label="Name" placeholder="Asahi" />
+          <FormField control={control} name="email" label="Email" type="email" placeholder="you@example.com" />
+          <FormField control={control} name="password" label="Password" type="password" />
+          {submitError && <p className="text-sm text-danger">{submitError}</p>}
+
+          <div className="flex flex-col gap-3 mt-2">
             <Button type="submit" variant="primary" fullWidth isPending={isSubmitting}>
               Sign up
             </Button>
-            <div className="flex items-center gap-2 text-xs text-default-400 w-full">
+
+            <div className="flex items-center gap-2 text-xs text-default-400">
               <span className="flex-1 h-px bg-default-200" />
               OR
               <span className="flex-1 h-px bg-default-200" />
             </div>
-            <Button type="button" variant="secondary" fullWidth onPress={onGoogleSignIn}>
+
+            <Button type="button" variant="outline" fullWidth onPress={onGoogleSignIn}>
               Continue with Google
             </Button>
-            <p className="text-sm text-default-500">
-              Already have an account? <Link to="/signin" className="text-primary">Sign in</Link>
-            </p>
-          </CardFooter>
+          </div>
         </form>
-      </Card>
+
+        <p className="text-sm text-default-500 text-center">
+          Already have an account? <Link to="/signin" className="text-blue-600 hover:underline">Sign in</Link>
+        </p>
+      </div>
     </div>
   );
 }

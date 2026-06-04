@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
-import { Button, Card, CardHeader, CardContent, CardFooter } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { authClient, signOut, useSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard")({
@@ -23,20 +23,16 @@ function DashboardPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-        </CardHeader>
-        <CardContent className="gap-1">
+      <div className="w-full max-w-sm flex flex-col gap-6">
+        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <div className="flex flex-col gap-1">
           <p className="text-sm text-default-600">Signed in as</p>
           <p className="font-medium">{session?.user.email}</p>
-        </CardContent>
-        <CardFooter>
-          <Button variant="secondary" onPress={onSignOut}>
-            Sign out
-          </Button>
-        </CardFooter>
-      </Card>
+        </div>
+        <Button variant="secondary" onPress={onSignOut} className="self-start">
+          Sign out
+        </Button>
+      </div>
     </div>
   );
 }

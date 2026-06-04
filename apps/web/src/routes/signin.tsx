@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button, Card, CardHeader, CardContent, CardFooter } from "@heroui/react";
+import { Button } from "@heroui/react";
 import { useState } from "react";
 import { signIn } from "@/lib/auth";
 import { FormField } from "@/features/auth/components/FormField";
@@ -20,7 +20,11 @@ export const Route = createFileRoute("/signin")({
 function SignInPage() {
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { control, handleSubmit, formState: { isSubmitting } } = useForm<FormValues>({
+  const {
+    control,
+    handleSubmit,
+    formState: { isSubmitting },
+  } = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: "", password: "" },
   });
@@ -42,34 +46,59 @@ function SignInPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <h1 className="text-2xl font-bold">Sign in</h1>
-        </CardHeader>
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="gap-4">
-            <FormField control={control} name="email" label="Email" type="email" placeholder="you@example.com" />
-            <FormField control={control} name="password" label="Password" type="password" />
-            {submitError && <p className="text-sm text-danger">{submitError}</p>}
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3">
-            <Button type="submit" variant="primary" fullWidth isPending={isSubmitting}>
+      <div className="w-full max-w-sm flex flex-col gap-8">
+        <h1 className="text-2xl font-bold">Sign in</h1>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <FormField
+            control={control}
+            name="email"
+            label="Email"
+            type="email"
+            placeholder="you@example.com"
+          />
+          <FormField
+            control={control}
+            name="password"
+            label="Password"
+            type="password"
+          />
+          {submitError && <p className="text-sm text-danger">{submitError}</p>}
+
+          <div className="flex flex-col gap-3 mt-2">
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              isPending={isSubmitting}
+            >
               Sign in
             </Button>
-            <div className="flex items-center gap-2 text-xs text-default-400 w-full">
+
+            <div className="flex items-center gap-2 text-xs text-default-400">
               <span className="flex-1 h-px bg-default-200" />
               OR
               <span className="flex-1 h-px bg-default-200" />
             </div>
-            <Button type="button" variant="secondary" fullWidth onPress={onGoogleSignIn}>
+
+            <Button
+              type="button"
+              variant="outline"
+              fullWidth
+              onPress={onGoogleSignIn}
+            >
               Continue with Google
             </Button>
-            <p className="text-sm text-default-500">
-              Don't have an account? <Link to="/signup" className="text-primary">Sign up</Link>
-            </p>
-          </CardFooter>
+          </div>
         </form>
-      </Card>
+
+        <p className="text-sm text-default-500 text-center">
+          Don't have an account?{" "}
+          <Link to="/signup" className="text-blue-600 hover:underline">
+            Sign up
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }

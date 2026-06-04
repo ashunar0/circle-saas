@@ -4,7 +4,7 @@ import { redactOrgSecrets } from "./lib/middleware/redact-org-secrets";
 import { resolveTenant } from "./lib/middleware/tenant";
 
 const app = new Hono()
-  .use("/api/auth/organization/*", redactOrgSecrets)
+  .use("/api/auth/*", redactOrgSecrets)
   .on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw))
   .get("/api/ping", (c) => c.json({ ok: true }))
   .use("/api/t/:tenantId/*", resolveTenant)

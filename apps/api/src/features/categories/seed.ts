@@ -10,6 +10,9 @@ export const DEFAULT_CATEGORIES: Array<{ name: string; sortOrder: number }> = [
 ];
 
 export async function seedDefaultCategories(client: Client): Promise<void> {
+  const existing = await client.execute("SELECT count(*) as n FROM categories");
+  if (Number(existing.rows[0]?.n ?? 0) > 0) return;
+
   for (const cat of DEFAULT_CATEGORIES) {
     await client.execute({
       sql: "INSERT INTO categories (id, name, sort_order) VALUES (?, ?, ?)",

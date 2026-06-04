@@ -53,9 +53,8 @@ async function main() {
   console.log("---");
   console.log(`migrated=${migrated} skipped=${skipped} failed=${failed.length}`);
 
-  if (failed.length > 0) {
-    process.exitCode = 1;
-  }
+  // centralDb の libSQL WebSocket が event loop を生かしたままにするので明示終了
+  process.exit(failed.length > 0 ? 1 : 0);
 }
 
 main().catch((err) => {

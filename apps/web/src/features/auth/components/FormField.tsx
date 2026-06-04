@@ -15,7 +15,7 @@ export function FormField<T extends FieldValues>({ control, name, label, type, p
   return (
     <TextField name={field.name} value={field.value ?? ""} onChange={field.onChange} onBlur={field.onBlur} type={type} isInvalid={!!fieldState.error}>
       <Label>{label}</Label>
-      <Input placeholder={placeholder} />
+      <Input placeholder={placeholder} ref={field.ref} />
       {fieldState.error?.message && <FieldError>{fieldState.error.message}</FieldError>}
     </TextField>
   );

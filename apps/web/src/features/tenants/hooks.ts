@@ -21,11 +21,25 @@ export function useOrgs() {
   });
 }
 
+function generateSlug(name: string): string {
+  const ascii = name
+    .toLowerCase()
+    .replace(/[^a-z0-9-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 24);
+  const shortId = crypto.randomUUID().slice(0, 8);
+  return `${ascii || "org"}-${shortId}`;
+}
+
 export function useCreateOrg() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (input: CreateOrgInput) => {
-      const { error } = await authClient.organization.create(input);
+      const { error } = await authClient.organization.create({
+        name: input.name,
+        slug: generateSlug(input.name),
+      });
       if (error) {
         throw new Error(error.message ?? "作成に失敗しました");
       }

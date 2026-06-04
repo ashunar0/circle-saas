@@ -1,9 +1,10 @@
-import { createFileRoute, redirect, Link } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@heroui/react";
 import { authClient } from "@/lib/auth";
 import { FormField } from "@/components/FormField";
+import { OrgList } from "@/features/tenants/components/OrgList";
 import { useCreateOrg, useOrgs } from "@/features/tenants/hooks";
 import {
   createOrgInput,
@@ -31,7 +32,7 @@ function TenantsPage() {
     formState: { isSubmitting },
   } = useForm<CreateOrgInput>({
     resolver: zodResolver(createOrgInput),
-    defaultValues: { name: "", slug: "" },
+    defaultValues: { name: "" },
   });
 
   const onSubmit = (values: CreateOrgInput) => {
@@ -54,26 +55,7 @@ function TenantsPage() {
           ) : orgs.length === 0 ? (
             <p className="text-default-500">まだサークルがありません</p>
           ) : (
-            <ul className="flex flex-col gap-2">
-              {orgs.map((org) => (
-                <li
-                  key={org.id}
-                  className="border rounded p-3 flex justify-between items-center"
-                >
-                  <div>
-                    <p className="font-medium">{org.name}</p>
-                    <p className="text-xs text-default-500">{org.slug}</p>
-                  </div>
-                  <Link
-                    to="/t/$tenantId"
-                    params={{ tenantId: org.id }}
-                    className="text-blue-600 hover:underline text-sm"
-                  >
-                    開く →
-                  </Link>
-                </li>
-              ))}
-            </ul>
+            <OrgList orgs={orgs} />
           )}
         </section>
 
@@ -88,12 +70,6 @@ function TenantsPage() {
               name="name"
               label="サークル名"
               placeholder="うちのサークル"
-            />
-            <FormField
-              control={control}
-              name="slug"
-              label="slug"
-              placeholder="my-circle"
             />
             {createOrg.error && (
               <p className="text-sm text-danger">{createOrg.error.message}</p>

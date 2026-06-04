@@ -17,7 +17,11 @@ function DashboardPage() {
   const { data: session } = useSession();
 
   const onSignOut = async () => {
-    await signOut();
+    const { error } = await signOut();
+    if (error) {
+      console.error("Sign out failed:", error);
+      return;
+    }
     navigate({ to: "/signin" });
   };
 

@@ -5,21 +5,23 @@
 ## 1. 全体像
 
 ```
-Phase 0  ─ 環境構築 (scaffold)              ─ 1-2 days
-Phase 1  ─ Auth                              ─ 1-2 days
-Phase 2  ─ Multi-tenant                      ─ 2-3 days
-Phase 3  ─ Tenant DB schema                  ─ 1 day
-Phase 4  ─ 立替申請ワークフロー (core)        ─ 3-5 days  ★ MVP 核心
-Phase 5  ─ 一覧 / 集計                       ─ 2-3 days
-Phase 6  ─ メンバー管理                      ─ 2 days
-Phase 7  ─ Polish                            ─ 2 days
-Phase 8  ─ Deploy                            ─ 1-2 days
+Phase 0    ─ 環境構築 (scaffold)                  ─ 1-2 days  ✅
+Phase 1    ─ Auth                                  ─ 1-2 days  ✅
+Phase 2    ─ Multi-tenant                          ─ 2-3 days  ✅
+Phase 3    ─ Tenant DB schema (expense 単独)       ─ 1 day     ✅
+Phase 3.5  ─ Tenant DB schema を Transaction 系へ  ─ 1 day
+Phase 4    ─ Tenant Shell + 口座 + 設定            ─ 1.5-2 days
+Phase 5    ─ Transaction 投稿系 (★ MVP 核心)        ─ 2.5-3.5 days
+Phase 6    ─ 取引一覧 + 残高 + ホーム dashboard     ─ 2.5-3 days
+Phase 7    ─ メンバー管理 + エクスポート            ─ 2.5-3 days
+Phase 8    ─ Polish + in-app 通知                  ─ 2 days
+Phase 9    ─ Deploy                                ─ 1-2 days
 ──────────────────────────────────────────────────────
-MVP 合計目安: ~15-20 day-equivalent (週末 + 平日夜で 1.5-2 ヶ月)
+MVP 合計目安: ~17-21 day-equivalent (週末 + 平日夜で 2-2.5 ヶ月)
 
 v1.1 ─ Billing (Stripe)                     ─ MVP 直後
 
-v2+  ─ OCR / 年度引継ぎ / 決算PDF / 通知 / role 拡張 / カテゴリ / 活動別 grouping
+v2+  ─ OCR / 年度引継ぎ / 決算PDF / メール通知 / Activity entity / Budget / FiscalPeriod / role 拡張 / カテゴリ管理 UI
 ```
 
 ## 2. Phase 別 detail
@@ -56,7 +58,7 @@ v2+  ─ OCR / 年度引継ぎ / 決算PDF / 通知 / role 拡張 / カテゴリ
 
 **DOD**: ユーザーが複数サークル所属できる、切替できる、各 tenant DB が物理的に独立
 
-### Phase 3: Tenant DB schema ✅ (完了 2026-06-04)
+### Phase 3: Tenant DB schema (expense 単独) ✅ (完了 2026-06-04)
 
 - Tenant DB schema: `expenses` / `expense_events` / `categories`
 - migration を全 tenant DB に loop apply するスクリプト (`db:migrate:tenants`)
@@ -65,46 +67,79 @@ v2+  ─ OCR / 年度引継ぎ / 決算PDF / 通知 / role 拡張 / カテゴリ
 
 **Done**: 全 tenant DB に schema 適用 / categories 5 件 seed / sample expenses + events 動作確認済み。
 
-### Phase 4: 立替申請ワークフロー ★ MVP 核心
+> ⚠️ Phase 3 後の設計再検討で MVP を「会計管理アプリ」スコープに拡張、Transaction 上位概念モデル ([DATA-MODEL.md](./DATA-MODEL.md), [ADR 008](./decisions/008-transaction-model.md)) に移行することが決定。Phase 3.5 で Tenant DB schema を再生成する。
 
-- BE: `POST /api/t/:tenantId/expenses` (申請)
-- BE: `PATCH /api/t/:tenantId/expenses/:id/approve | reject | paid` (status 遷移)
-- BE: `GET /api/t/:tenantId/expenses` (一覧)
-- BE: Presigned URL endpoints (R2 upload / access)
-- FE: `/t/:tenantId` (一覧) / `/t/:tenantId/expenses/new` / `/t/:tenantId/expenses/:id`
-- 領収書画像 upload (Presigned PUT)
-- status 遷移: 申請中 → 承認 → 振込済 / 差戻し
+### Phase 3.5: Tenant DB schema を Transaction 系に再生成
 
-**DOD**: end-to-end で 1 申請が完走 (投稿 → 承認 → 振込済み)
+- `features/transactions/db.ts` (type=expense/direct/income discriminator)
+- `features/accounts/db.ts` (bank/cash 2 種、archive)
+- `features/categories/db.ts` を `kind` カラム追加 (expense/income)
+- `features/transaction-events/db.ts` (expense status 遷移 log)
+- 旧 `features/expenses/db.ts` 削除
+- migration 再生成、dev tenant を delete + 再作成して動作確認
+- `beforeCreateOrganization` の default seed を更新: Account x 2 + Category x 9
+- code review follow-up (シンプル化前提): redact 拡大 / categoryRelations 位置 / Migration runner の `client.batch` + `IF NOT EXISTS` / `ExpenseStatus` を `packages/shared` に も同時に処理
 
-### Phase 5: 一覧 / 集計
+**DOD**: 新規サークル作成で Tenant DB に Transaction/Account/Category/TransactionEvent の 4 table が作られ、Account 2 件 + Category 9 件が seed されてる
 
-- HeroUI Table で `expenses` 一覧 (sort / filter / paginate)
-- カテゴリ別 + 月別の簡易集計 dashboard
-- 自分の申請履歴 (メンバー向け)
+### Phase 4: Tenant Shell + 口座 + 設定
 
-**DOD**: 一覧 + 集計が機能、UX 違和感なし
+- BE: `requireAdmin` middleware (role guard)
+- FE: Tenant 内 Layout (Slack スタイル Sidebar + Header + Avatar dropdown + mobile drawer)
+- FE: `/t/:tenantId/` ホーム placeholder
+- FE: `/t/:tenantId/accounts` (口座一覧 + 追加 + 編集 + archive)
+- FE: `/t/:tenantId/settings` (サークル名 / 削除 / 脱退)
+- Tenant 切替 dropdown (Sidebar 上部)
+- sign out
 
-### Phase 6: メンバー管理
+**DOD**: ログイン後にサークルを開くと layout が出る、admin で口座管理 / 設定変更 / サークル削除ができる、member で口座 / 設定にアクセスすると 403
 
-- BE: invitation API (作成 / 検証 / 受理)
-- BE: 役割変更 API
-- FE: `/t/:tenantId/members` (メンバー一覧、招待リンク発行、role 変更)
-- onboarding flow (招待リンク → サインアップ → 自動 tenant 参加)
+### Phase 5: Transaction 投稿系 ★ MVP 核心
 
-**DOD**: 招待 URL から新規メンバーが参加できる
+- BE: `POST /api/t/:tenantId/transactions` (type 別 validation、admin/member 権限)
+- BE: `GET /api/t/:tenantId/transactions/:id` (詳細 + events)
+- BE: `PATCH /api/t/:tenantId/transactions/:id` (expense status 遷移、direct/income 編集)
+- BE: `DELETE /api/t/:tenantId/transactions/:id` (direct/income のみ、admin)
+- BE: Presigned URL endpoints (R2 PUT / GET、5-10 分期限)
+- FE: `/t/:tenantId/transactions/new` (type 選択 dropdown for admin、member は expense 固定、画像 upload、フォーム)
+- FE: `/t/:tenantId/transactions/:id` (詳細、events タイムライン、承認/差戻/振込済/再提出ボタン)
+- status 遷移: pending → approved → paid / rejected (差戻し → pending)
 
-### Phase 7: Polish
+**DOD**: end-to-end で 1 立替申請が完走 (投稿 → 承認 → 振込済み)、admin で 1 収入 + 1 直接支出 が記録できる
+
+### Phase 6: 取引一覧 + 残高 + ホーム dashboard
+
+- BE: `GET /api/t/:tenantId/transactions` (filter: type / status / category / dateRange / userId、role で scope 分岐)
+- BE: `GET /api/t/:tenantId/balance` (Account 別 + 全体残高、現金主義集計)
+- BE: `GET /api/t/:tenantId/summary` (期間内 P/L: 収入合計 / 支出合計 / 差額)
+- FE: `/t/:tenantId/transactions` (HeroUI Table、role で表示分岐、filter 多数)
+- FE: `/t/:tenantId/` ホーム dashboard (admin: 残高 / 今月の収支 / 承認待ち / 最近 5 件、member: 自分の申請ステータス / 自分の最近 5 件)
+
+**DOD**: admin で「今月の残高 / 収支 / 承認待ち件数」が一発で見える、member で「自分の申請がどうなってるか」が一発で見える
+
+### Phase 7: メンバー管理 + エクスポート
+
+- BE: invitation API (作成 / 検証 / 受理) ─ better-auth invitation を活用
+- BE: role 変更 / 除名 API
+- BE: `GET /api/t/:tenantId/export?from=...&to=...&includeReceipts=bool` (CSV + zip 生成、Presigned download)
+- FE: `/t/:tenantId/members` (招待リンク発行、role 変更、除名)
+- FE: `/t/:tenantId/export` (date range picker、zip download)
+- FE: `/invite/:token` (招待受入 onboarding flow ─ 未ログイン → signup フロー、ログイン済 → 直接加入)
+
+**DOD**: 招待 URL から新規メンバーが参加できる、admin が任意期間の取引 + 領収書 zip を出せる (補助金申請に使える)
+
+### Phase 8: Polish + in-app 通知
 
 - HeroUI Toast で flash 相当 (成功 / エラー / info)
-- React Hook Form + Zod で form validation
+- React Hook Form + Zod で form validation 統一
 - Empty states (申請ない / サークルない / メンバーひとり 等)
 - Loading states (Suspense + Skeleton)
 - Error boundary
+- in-app 通知: header bell icon dropdown、申請承認/差戻し時に member へ in-app 通知
 
-**DOD**: UX が production grade
+**DOD**: UX が production grade、member は自分の申請が承認/差戻しされたことを bell でリアルタイム確認できる
 
-### Phase 8: Deploy
+### Phase 9: Deploy
 
 - BE: Fly.io (Dockerfile 作成、secrets 設定、deploy)
 - FE: Vercel or Cloudflare Pages (build setting、env var)
@@ -134,9 +169,11 @@ SaaS 練習目的の core 要素なので必須。
 | **OCR 自動抽出** | 領収書から日付 / 店名 / 金額 | UX 大幅改善、API コスト要検討 |
 | **年次決算 PDF** | 大学公認サークル向け収支報告書 | institutional 契約の決め手 |
 | **メール / push 通知** | 申請 / 承認時 | engagement 向上 |
-| **活動別 grouping** | 新歓 / 夏合宿 / 追いコン 単位 | Saifban 参考、サークル特有 |
+| **Activity / イベント tag** | 新歓 / 夏合宿 / 演奏会 / 文化祭 単位の事後集計 | MVP は description ベタ書きで運用、現場で欲しくなったら entity 化 |
+| **Budget (予算)** | Activity or Category 単位の予算 + 執行率 | あさひ現場では使わなかった、現場 feedback 待ち |
+| **FiscalPeriod (会計期)** | 期単位の集計を強制 | Budget 導入時にセット、それまでは date range で OK |
 | 細かい role | 副会計 / 部長 / 監査 | 大型サークル向け |
-| カスタムカテゴリ | tenant 単位でカテゴリ定義 | 柔軟性 |
+| **カスタムカテゴリ管理 UI** | tenant 単位でカテゴリ追加/編集/並び替え | MVP は default 9 個固定 |
 | 振込銀行 API | 実際の振込実行 | 究極の自動化 |
 | i18n | 日本語以外 | 海外展開 |
 
@@ -146,10 +183,11 @@ SaaS 練習目的の core 要素なので必須。
 
 | マイルストーン | 内容 | 目標 |
 |---|---|---|
-| M1 | Phase 0 完了 | 2026-06-08 |
-| M2 | Phase 4 (立替フロー) 完了 | 2026-07-05 |
-| M3 | Phase 8 (deploy) 完了 = MVP リリース | 2026-07-31 |
-| M4 | v1.1 (billing) 完了 | 2026-08-31 |
+| M1 | Phase 0 完了 | ✅ 2026-06-03 |
+| M2 | Phase 3 完了 | ✅ 2026-06-04 |
+| M3 | Phase 5 (Transaction 投稿系) 完了 = MVP の核心体験動く | 2026-07-15 |
+| M4 | Phase 9 (deploy) 完了 = MVP リリース | 2026-08-15 |
+| M5 | v1.1 (billing) 完了 | 2026-09-15 |
 
 ## 6. 落とし穴と対策
 
@@ -195,6 +233,18 @@ SaaS 練習目的の core 要素なので必須。
 - **問題**: 一部の npm package が Node.js 前提で Bun で動かない
 - **対策**: 主要 stack (Hono / Drizzle / better-auth / Vite) は Bun 対応済み、その他は都度確認
 - **Phase**: 随時
+
+### 6.8 Transaction type discriminator の type-safety
+
+- **問題**: 1 table + type discriminator パターンで、type ごとに使うカラム / status の有効値が違うため、TypeScript で type-narrow が効きにくい
+- **対策**: Zod の `discriminatedUnion` で type=expense / direct / income それぞれの schema を分けて validate、API layer から service layer まで discriminated union 型で受け渡す
+- **Phase**: 5
+
+### 6.9 残高計算の現金主義ロジック
+
+- **問題**: 残高 = 収入 - 確定支出。`expense` で `status=paid` だけが残高に影響、`pending / approved / rejected` は未確定。意外と境界条件が多い (差戻し後の再申請、承認後の取り消し等)
+- **対策**: 残高計算は repository 層で 1 つの SQL に集約、テスト可能な単体関数に切り出す。`expense_events` を見れば挙動の歴史も追える
+- **Phase**: 6
 
 ## 7. 関連ドキュメント
 

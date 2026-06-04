@@ -35,9 +35,9 @@ apps/api/                  # Hono BE (@circle/api)
     lib/                   # cross-cutting concerns
       db/
         central.ts         # Central DB Drizzle client
-        tenant.ts          # Tenant DB factory (dynamic connect)
-        schema.ts          # Central DB schema (現在 placeholder、Phase 1+ で features に分割)
-      auth/                # better-auth config (Phase 1)
+        tenant.ts          # Tenant DB factory (dynamic connect、Phase 2)
+        schema.ts          # Central DB schema の aggregator (auth/schema を re-export、Phase 2+ で他テーブル追加)
+      auth/                # better-auth config + schema (Phase 1 完了)
       middleware/          # tenant resolution (Phase 2)
     features/              # feature folders (Phase 1+ で作成)
       <feature>/
@@ -116,8 +116,11 @@ bun run db:studio        # drizzle-kit studio (DB GUI)
 
 - ✅ **Phase 0**: 環境構築 (scaffold) ─ 完了 2026-06-03
   - 全 stack scaffold 動作確認済み、9 commits、`bun run dev` で BE+FE 同時起動 OK
-- ⬜ **Phase 1**: Auth (better-auth セットアップ) ← **次ここから**
-- ⬜ Phase 2: Multi-tenant (DB per tenant、Turso API で programmatic DB 作成 + middleware)
+- ✅ **Phase 1**: Auth (better-auth セットアップ) ─ 完了 2026-06-04
+  - ADR 001-004 で設計判断 (better-auth / DB session + httpOnly cookie / email verification は Phase 6 / email+password + Google OAuth)
+  - email+password & Google OAuth で sign in/up、`/dashboard` protected route、sign out
+  - dev 用 process 第一弾 (PR / ADR / CI typecheck / AI review) を併走で導入
+- ⬜ **Phase 2**: Multi-tenant (DB per tenant、Turso API で programmatic DB 作成 + middleware) ← **次ここから**
 - ⬜ Phase 3: Tenant DB schema (`features/expenses/db.ts` 等、migration loop)
 - ⬜ Phase 4: 立替申請ワークフロー (★ MVP 核心)
 - ⬜ Phase 5: 一覧 / 集計
@@ -191,4 +194,4 @@ git ignored。`.env.example` が tracked (placeholder)。
 
 ---
 
-**Next**: Phase 1 (Auth) から。`docs/ROADMAP.md` の Phase 1 section に方針記載済み。
+**Next**: Phase 2 (Multi-tenant) から。`docs/ROADMAP.md` の Phase 2 section に方針記載済み。

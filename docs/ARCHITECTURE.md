@@ -357,49 +357,62 @@ app.use("/api/t/:tenantId/*", async (c, next) => {
 > [!NOTE]
 > better-auth は session に "active organization" を乗せる機能も持つので、URL path の代わりに `session.activeOrganizationId` を使うパターンも選べる。MVP は URL pattern (`/api/t/:tenantId/*`) を採用 ─ RESTful で deep link / bookmark に強いため。
 
-### 4.4 Migration 戦略 (Turso schema database pattern)
+### 4.4 Migration 戦略 (Tenant DB に loop apply)
 
-ADR 005 で採用した **Turso schema database pattern** に乗る。schema 専用の parent DB を 1 個用意し、各 tenant DB を child として作成すると schema が物理的に共有される。schema 変更は parent DB に流すだけで全 child に伝播。
+[ADR 006](./decisions/006-tenant-db-migration-loop.md) で確定: Turso の schema database pattern は deprecated 判明のため不採用、loop apply 方式に方針修正。
 
-**新規 tenant DB 作成時** (サークル作成 = `POST /api/auth/organization/create` の `afterCreate` hook):
+**新規 tenant DB 作成時** (サークル作成 = `POST /api/auth/organization/create` の `beforeCreateOrganization` hook):
 
 ```typescript
-import { createClient as createTursoClient } from "@tursodatabase/api";
+import { createClient as createTursoApiClient } from "@tursodatabase/api";
 
-const turso = createTursoClient({
+const turso = createTursoApiClient({
   org: process.env.TURSO_ORG_SLUG!,
   token: process.env.TURSO_PLATFORM_API_TOKEN!,
 });
 
 async function provisionTenantDb(slug: string) {
   const dbName = `tenant-${slug}-${shortId()}`;
-  // schema parent から child を作成 → schema 自動継承
-  await turso.databases.create(dbName, {
-    schema: process.env.TURSO_TENANT_SCHEMA_PARENT!,
-    group: "default",
-  });
-  const { token } = await turso.databases.createToken(dbName, {
-    expiration: "never",
+  await turso.databases.create(dbName, { group: "default" });
+  const { jwt } = await turso.databases.createToken(dbName, {
     authorization: "full-access",
   });
   return {
     dbName,
     dbUrl: `libsql://${dbName}-${process.env.TURSO_ORG_SLUG}.turso.io`,
-    dbToken: token,
+    dbToken: jwt,
   };
 }
 ```
 
+`beforeCreateOrganization` で `provisionTenantDb` → 返り値を `additionalFields` 経由で organization レコードに同 transaction で書き込む。Turso API が失敗すれば organization 自体が作成されないため orphan は出ない。
+
 **schema 変更時** (Tenant DB):
 
-```sh
-# parent DB に対して drizzle-kit を流す → child 全部に自動伝播
-cd apps/api
-DATABASE_URL=$TURSO_TENANT_SCHEMA_PARENT_URL bun run db:generate
-DATABASE_URL=$TURSO_TENANT_SCHEMA_PARENT_URL bun run db:push
+Phase 3 で書く migration runner で、Central DB の `organization` テーブルから全 tenant 接続情報を引いて順次 apply する:
+
+```typescript
+async function applyMigrationToAllTenants(migrationSql: string) {
+  const orgs = await centralDb.query.organization.findMany({
+    where: isNotNull(organization.dbUrl),
+  });
+  for (const org of orgs) {
+    const client = createClient({ url: org.dbUrl, authToken: org.dbToken });
+    try {
+      await client.execute(migrationSql);
+      await centralDb
+        .update(organization)
+        .set({ lastMigratedAt: new Date() })
+        .where(eq(organization.id, org.id));
+    } catch (err) {
+      console.error(`✗ failed ${org.slug}:`, err);
+      // 進捗を残しつつ次へ、後で retry
+    }
+  }
+}
 ```
 
-migration loop / 進捗管理 / retry script は不要。dev / prod で異なる parent DB を持ち、prod parent への migration は staging で事前検証する運用。
+idempotent な migration + 進捗を `organization` に記録 + retry script で部分失敗からの復旧を担保する (詳細は ADR 006 §Mitigation)。
 
 ## 5. 認証フロー
 

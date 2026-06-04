@@ -1,7 +1,7 @@
 # 005: Multi-tenant 戦略 (better-auth organizations + Turso schema parent DB)
 
 **Date**: 2026-06-04
-**Status**: Accepted
+**Status**: Partially superseded by [ADR-006](./006-tenant-db-migration-loop.md) (Decision B 取り下げ) と [ADR-007](./007-redact-org-secrets-in-response.md) (Decision A の Mitigation 補強)
 
 ## Context
 

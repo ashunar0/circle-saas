@@ -164,11 +164,12 @@ SaaS 練習目的の core 要素なので必須。
 - **対策**: dev では 1-2 tenant で確認、本番は throttle + retry queue
 - **Phase**: 2
 
-### 6.3 ~~Migration を全 tenant DB に流す pattern~~ (✅ ADR 005 で解消)
+### 6.3 Migration を全 tenant DB に流す pattern (⚠️ 再オープン)
 
-- **当初の懸念**: schema 変更時に全 tenant DB に loop apply、失敗 / 中断時の進捗管理 / retry
-- **解消**: Turso schema database pattern (DB 作成時に `schema: "<parent>"` を指定すると schema が物理共有) を採用。migration は schema parent DB に流すだけで全 child に伝播 ([ADR 005](./decisions/005-multi-tenant-strategy.md))
-- **残課題**: schema parent DB への migration を誤ると全 tenant に波及するため、staging parent での事前検証を運用に組み込む
+- **問題**: schema 変更時に全 tenant DB に適用が必要、失敗 / 中断時の handle
+- **経緯**: ADR 005 で Turso schema database pattern を採用して解消したつもりだったが、Phase 2.2 で当機能が Turso 公式で deprecated と判明し、[ADR 006](./decisions/006-tenant-db-migration-loop.md) で **loop apply 方式に方針修正**
+- **対策**: idempotent な migration、進捗を `organization` table の `schemaVersion` / `lastMigratedAt` で記録、retry script (ADR 006 §Mitigation)
+- **Phase**: 3 で具体化 (migration runner と進捗テーブルの実装)
 
 ### 6.4 TanStack Router file-based + Hono RPC の型推論負荷
 

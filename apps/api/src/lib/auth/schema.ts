@@ -1,11 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import {
-  sqliteTable,
-  text,
-  integer,
-  index,
-  uniqueIndex,
-} from "drizzle-orm/sqlite-core";
+import { sqliteTable, text, integer, index } from "drizzle-orm/sqlite-core";
 
 export const user = sqliteTable("user", {
   id: text("id").primaryKey(),
@@ -96,23 +90,19 @@ export const verification = sqliteTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
-export const organization = sqliteTable(
-  "organization",
-  {
-    id: text("id").primaryKey(),
-    name: text("name").notNull(),
-    slug: text("slug").notNull().unique(),
-    logo: text("logo"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-      .notNull(),
-    metadata: text("metadata"),
-    dbName: text("db_name"),
-    dbUrl: text("db_url"),
-    dbToken: text("db_token"),
-  },
-  (table) => [uniqueIndex("organization_slug_uidx").on(table.slug)],
-);
+export const organization = sqliteTable("organization", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  logo: text("logo"),
+  createdAt: integer("created_at", { mode: "timestamp_ms" })
+    .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+    .notNull(),
+  metadata: text("metadata"),
+  dbName: text("db_name"),
+  dbUrl: text("db_url"),
+  dbToken: text("db_token"),
+});
 
 export const member = sqliteTable(
   "member",

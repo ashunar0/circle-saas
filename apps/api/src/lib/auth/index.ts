@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { organization } from "better-auth/plugins";
 import { centralDb } from "../db/central";
 import * as schema from "../db/schema";
 
@@ -25,6 +26,19 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7,
     updateAge: 60 * 60 * 24,
   },
+  plugins: [
+    organization({
+      schema: {
+        organization: {
+          additionalFields: {
+            dbName: { type: "string", required: false, input: false },
+            dbUrl: { type: "string", required: false, input: false },
+            dbToken: { type: "string", required: false, input: false },
+          },
+        },
+      },
+    }),
+  ],
   ...(googleClientId && googleClientSecret
     ? {
         socialProviders: {

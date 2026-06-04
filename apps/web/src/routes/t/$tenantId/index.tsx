@@ -1,9 +1,6 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth";
-import { api } from "@/lib/api";
-
-type Whoami = { organizationId: string; role: string };
+import { useWhoami } from "@/features/tenants/hooks";
 
 export const Route = createFileRoute("/t/$tenantId/")({
   beforeLoad: async () => {
@@ -17,34 +14,7 @@ export const Route = createFileRoute("/t/$tenantId/")({
 
 function TenantPage() {
   const { tenantId } = Route.useParams();
-  const [me, setMe] = useState<Whoami | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    let canceled = false;
-    const fetchWhoami = async () => {
-      try {
-        const res = await api.api.t[":tenantId"].whoami.$get({
-          param: { tenantId },
-        });
-        if (!res.ok) {
-          const text = await res.text().catch(() => "");
-          if (!canceled) setError(text || `HTTP ${res.status}`);
-          return;
-        }
-        const data = await res.json();
-        if (!canceled) setMe(data);
-      } catch (err) {
-        if (!canceled) {
-          setError(err instanceof Error ? err.message : "ネットワークエラー");
-        }
-      }
-    };
-    fetchWhoami();
-    return () => {
-      canceled = true;
-    };
-  }, [tenantId]);
+  const { data: me, isLoading, error } = useWhoami(tenantId);
 
   return (
     <div className="min-h-screen p-8">
@@ -54,8 +24,8 @@ function TenantPage() {
         </Link>
         <h1 className="text-2xl font-bold">サークルダッシュボード</h1>
         {error ? (
-          <p className="text-danger">エラー: {error}</p>
-        ) : !me ? (
+          <p className="text-danger">エラー: {error.message}</p>
+        ) : isLoading || !me ? (
           <p className="text-default-500">読み込み中…</p>
         ) : (
           <div className="flex flex-col gap-2">

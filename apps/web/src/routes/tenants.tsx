@@ -1,22 +1,14 @@
 import { createFileRoute, redirect, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@heroui/react";
-import { useEffect, useState } from "react";
 import { authClient } from "@/lib/auth";
 import { FormField } from "@/features/auth/components/FormField";
-
-const schema = z.object({
-  name: z.string().min(1, "サークル名は必須"),
-  slug: z
-    .string()
-    .min(1, "slug は必須")
-    .regex(/^[a-z0-9-]+$/, "英小文字・数字・ハイフンのみ"),
-});
-type FormValues = z.infer<typeof schema>;
-
-type Org = { id: string; name: string; slug: string };
+import { useCreateOrg, useOrgs } from "@/features/tenants/hooks";
+import {
+  createOrgInput,
+  type CreateOrgInput,
+} from "@/features/tenants/schema";
 
 export const Route = createFileRoute("/tenants")({
   beforeLoad: async () => {
@@ -29,51 +21,26 @@ export const Route = createFileRoute("/tenants")({
 });
 
 function TenantsPage() {
-  const [orgs, setOrgs] = useState<Org[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [listError, setListError] = useState<string | null>(null);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const { data: orgs = [], isLoading, error: listError } = useOrgs();
+  const createOrg = useCreateOrg();
 
   const {
     control,
     handleSubmit,
     reset,
     formState: { isSubmitting },
-  } = useForm<FormValues>({
-    resolver: zodResolver(schema),
+  } = useForm<CreateOrgInput>({
+    resolver: zodResolver(createOrgInput),
     defaultValues: { name: "", slug: "" },
   });
 
-  const refresh = async () => {
-    setLoading(true);
-    setListError(null);
+  const onSubmit = async (values: CreateOrgInput) => {
     try {
-      const { data, error } = await authClient.organization.list();
-      if (error) {
-        setListError(error.message ?? "サークル一覧の取得に失敗しました");
-        return;
-      }
-      setOrgs((data ?? []) as Org[]);
-    } catch (err) {
-      setListError(err instanceof Error ? err.message : "ネットワークエラー");
-    } finally {
-      setLoading(false);
+      await createOrg.mutateAsync(values);
+      reset();
+    } catch {
+      // createOrg.error から表示
     }
-  };
-
-  useEffect(() => {
-    refresh();
-  }, []);
-
-  const onSubmit = async (values: FormValues) => {
-    setSubmitError(null);
-    const { error } = await authClient.organization.create(values);
-    if (error) {
-      setSubmitError(error.message ?? "作成に失敗しました");
-      return;
-    }
-    reset();
-    await refresh();
   };
 
   return (
@@ -83,10 +50,10 @@ function TenantsPage() {
 
         <section className="flex flex-col gap-3">
           <h2 className="text-lg font-semibold">所属しているサークル</h2>
-          {loading ? (
+          {isLoading ? (
             <p className="text-default-500">読み込み中…</p>
           ) : listError ? (
-            <p className="text-sm text-danger">{listError}</p>
+            <p className="text-sm text-danger">{listError.message}</p>
           ) : orgs.length === 0 ? (
             <p className="text-default-500">まだサークルがありません</p>
           ) : (
@@ -131,13 +98,13 @@ function TenantsPage() {
               label="slug"
               placeholder="my-circle"
             />
-            {submitError && (
-              <p className="text-sm text-danger">{submitError}</p>
+            {createOrg.error && (
+              <p className="text-sm text-danger">{createOrg.error.message}</p>
             )}
             <Button
               type="submit"
               variant="primary"
-              isPending={isSubmitting}
+              isPending={isSubmitting || createOrg.isPending}
               className="self-start"
             >
               作成

@@ -1,14 +1,9 @@
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Button } from "@heroui/react";
-import { authClient, signOut, useSession } from "@/lib/auth";
+import { requireSession, signOut, useSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard")({
-  beforeLoad: async () => {
-    const { data: session } = await authClient.getSession();
-    if (!session) {
-      throw redirect({ to: "/signin" });
-    }
-  },
+  beforeLoad: requireSession,
   component: DashboardPage,
 });
 

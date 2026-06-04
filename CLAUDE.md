@@ -156,16 +156,15 @@ bun run db:studio        # drizzle-kit studio (DB GUI)
 - **コーチモード**: ユーザーが「コーチモードで」と言ったら考えさせる stance に切替 (`/Users/a.kawanobe/CLAUDE.md`)
 - **JSX 改行スタイル**: tag 内 props を改行で縦に伸ばすのを嫌う、長いハンドラはインライン展開せず切り出す (memory: `feedback_jsx_style`)
 
-### Process (Phase 1 から導入)
+### Process (Phase 1 から導入、Phase 2 で運用調整)
 
-- **Branch / PR**: 機能単位で `feature/phase-N-xxx` を切って、PR 経由で main に merge。直 push は process 系の chore commit のみ
+- **Branch / PR 運用 (案 B)**: **実コード変更 (`apps/api`, `apps/web`, `packages/*`) は branch + PR 経由で main に merge**。**doc / ADR / chore / 整合性更新 (`docs/`, `.github/`, `CLAUDE.md`, README) は main 直 push** で OK。判断軸: 「コード動作を変えるか」「LoC > 50 か」「auth / DB / RBAC に触るか」のどれかに yes なら PR、それ以外は直 push
 - **ADR**: 設計判断は `docs/decisions/` に残す (運用ルールは `docs/decisions/README.md`)
 - **PR template**: `.github/PULL_REQUEST_TEMPLATE.md` の What / Why / How tested を埋める
-- **CI**: GitHub Actions で push & PR に `bun run typecheck` が走る (`.github/workflows/ci.yml`)
+- **CI**: GitHub Actions で push & PR に `bun run typecheck` が走る (`.github/workflows/ci.yml`)。**直 push でも main に CI は走る**
 - **Self-review**: PR 立てたら自分で diff を一度通読してから merge
 - **Merge 戦略**: PR は **rebase merge** (atomic な commit 履歴を main に linear に残す)。merge 後は `--delete-branch` で remote branch も整理
-- **AI review 運用**:
-  - ADR / docs / process 系 PR: スキップ (self-review で十分)
+- **AI review 運用** (PR 経由の時のみ):
   - 実装系 (普通): merge 前に `/code-review` (medium effort) を Claude が会話の中で実行
   - 実装系 (大型 / 危険 / security touch / DB schema 変更 / リファクタ): あさひが `/ultrareview <PR#>` を手動起動
   - 判断軸: LoC 100行超え or 複雑 logic は AI review 入れる、auth / payment / file upload / RBAC は必ず、迷ったら厚め

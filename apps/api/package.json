@@ -17,6 +17,7 @@
     "db:seed:tenant": "bun scripts/seed-tenant.ts"
   },
   "dependencies": {
+    "@circle/shared": "workspace:*",
     "@libsql/client": "^0.17.3",
     "@tursodatabase/api": "^2.0.2",
     "better-auth": "^1.6.14",

@@ -14,7 +14,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:migrate:tenants": "bun scripts/migrate-tenants.ts",
-    "db:seed:tenant": "bun scripts/seed-tenant.ts"
+    "db:seed:tenant": "bun scripts/seed-tenant.ts",
+    "db:inspect:tenant": "bun scripts/inspect-tenant.ts"
   },
   "dependencies": {
     "@circle/shared": "workspace:*",

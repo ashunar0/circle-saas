@@ -12,7 +12,7 @@ import {
   updateAccountForTenant,
 } from "./service";
 
-export const accountsApp = new Hono<TenantContext>()
+const accounts = new Hono<TenantContext>()
   .use("*", requireAdmin)
   .get("/", async (c) => {
     const list = await listAccountsForTenant(c.get("tenantDb"));
@@ -50,3 +50,5 @@ export const accountsApp = new Hono<TenantContext>()
     if (!account) throw new HTTPException(404, { message: "account not found" });
     return c.json({ account });
   });
+
+export default accounts;

@@ -15,7 +15,10 @@
     "db:studio": "drizzle-kit studio",
     "db:migrate:tenants": "bun scripts/migrate-tenants.ts",
     "db:seed:tenant": "bun scripts/seed-tenant.ts",
-    "db:inspect:tenant": "bun scripts/inspect-tenant.ts"
+    "db:inspect:tenant": "bun scripts/inspect-tenant.ts",
+    "db:list:turso": "bun scripts/list-turso.ts",
+    "db:wipe:turso": "bun scripts/wipe-turso.ts",
+    "db:wipe:tenant": "bun scripts/wipe-tenant.ts"
   },
   "dependencies": {
     "@circle/shared": "workspace:*",

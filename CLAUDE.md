@@ -124,14 +124,22 @@ bun run db:studio        # drizzle-kit studio (DB GUI)
   - ADR 005-007 で設計判断 (better-auth organizations + additionalFields / Turso schema database 取り下げ → loop apply / redact middleware)
   - サークル作成 → Turso platform API で Tenant DB を物理作成、`resolveTenant` middleware で member 検証 + Tenant DB attach、機密 redact 中継
   - 案 B 運用導入 (実コード = PR、doc/ADR/chore = main 直 push)
-- ✅ **Phase 3**: Tenant DB schema ─ 完了 2026-06-04
+- ✅ **Phase 3**: Tenant DB schema (expense 単独) ─ 完了 2026-06-04
   - `expenses` / `expense_events` / `categories` テーブル定義 + loop apply runner (`db:migrate:tenants`)
   - 新規 tenant 作成時に migration + default 5 categories を自動適用 + dev seed (`db:seed:tenant`)
-- ⬜ Phase 4: 立替申請ワークフロー (★ MVP 核心) ← **次ここから**
-- ⬜ Phase 5: 一覧 / 集計
-- ⬜ Phase 6: メンバー管理 (招待リンク / role 変更)
-- ⬜ Phase 7: Polish (Toast / validation / empty / loading)
-- ⬜ Phase 8: Deploy (Fly.io / Vercel / R2)
+  - Phase 3.5 で Transaction 上位概念モデルに再生成 (ADR 008)
+- ✅ **Phase 3.5**: Tenant DB schema を Transaction 系に再生成 ─ 完了 2026-06-05
+  - `transactions` (type discriminator) / `transaction_events` / `accounts` / `categories.kind` 追加の 4 table 構成へ
+  - `packages/shared` に `TransactionStatus` / `TransactionAction` / `TransactionType` を切り出し
+  - migration runner を `client.batch('write')` + `IF NOT EXISTS` で atomic & retry 安全に
+  - `beforeCreateOrganization` の auto-seed が Account x 2 + Category x 9 を投入
+  - `db:inspect:tenant` dev tool 追加
+- ⬜ Phase 4: Tenant Shell + 口座 + 設定 ← **次ここから**
+- ⬜ Phase 5: Transaction 投稿系 (★ MVP 核心)
+- ⬜ Phase 6: 取引一覧 + 残高 + ホーム dashboard
+- ⬜ Phase 7: メンバー管理 + エクスポート
+- ⬜ Phase 8: Polish + in-app 通知
+- ⬜ Phase 9: Deploy
 - ⬜ v1.1: Billing (Stripe)、MVP 直後
 
 各 Phase の DOD (Definition of Done) と落とし穴は `docs/ROADMAP.md` 参照。
@@ -199,4 +207,4 @@ git ignored。`.env.example` が tracked (placeholder)。
 
 ---
 
-**Next**: Phase 4 (立替申請ワークフロー = ★ MVP 核心) から。`docs/ROADMAP.md` の Phase 4 section に方針記載済み。
+**Next**: Phase 4 (Tenant Shell + 口座 + 設定) から。`docs/ROADMAP.md` の Phase 4 section に方針記載済み。Phase 5 (Transaction 投稿系 = ★ MVP 核心) が続く。

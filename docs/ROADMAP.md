@@ -9,7 +9,7 @@ Phase 0    ─ 環境構築 (scaffold)                  ─ 1-2 days  ✅
 Phase 1    ─ Auth                                  ─ 1-2 days  ✅
 Phase 2    ─ Multi-tenant                          ─ 2-3 days  ✅
 Phase 3    ─ Tenant DB schema (expense 単独)       ─ 1 day     ✅
-Phase 3.5  ─ Tenant DB schema を Transaction 系へ  ─ 1 day
+Phase 3.5  ─ Tenant DB schema を Transaction 系へ  ─ 1 day     ✅
 Phase 4    ─ Tenant Shell + 口座 + 設定            ─ 1.5-2 days
 Phase 5    ─ Transaction 投稿系 (★ MVP 核心)        ─ 2.5-3.5 days
 Phase 6    ─ 取引一覧 + 残高 + ホーム dashboard     ─ 2.5-3 days
@@ -69,18 +69,18 @@ v2+  ─ OCR / 年度引継ぎ / 決算PDF / メール通知 / Activity entity /
 
 > ⚠️ Phase 3 後の設計再検討で MVP を「会計管理アプリ」スコープに拡張、Transaction 上位概念モデル ([DATA-MODEL.md](./DATA-MODEL.md), [ADR 008](./decisions/008-transaction-model.md)) に移行することが決定。Phase 3.5 で Tenant DB schema を再生成する。
 
-### Phase 3.5: Tenant DB schema を Transaction 系に再生成
+### Phase 3.5: Tenant DB schema を Transaction 系に再生成 ✅ (完了 2026-06-05)
 
-- `features/transactions/db.ts` (type=expense/direct/income discriminator)
-- `features/accounts/db.ts` (bank/cash 2 種、archive)
-- `features/categories/db.ts` を `kind` カラム追加 (expense/income)
-- `features/transaction-events/db.ts` (expense status 遷移 log)
-- 旧 `features/expenses/db.ts` 削除
-- migration 再生成、dev tenant を delete + 再作成して動作確認
-- `beforeCreateOrganization` の default seed を更新: Account x 2 + Category x 9
-- code review follow-up (シンプル化前提): redact 拡大 / categoryRelations 位置 / Migration runner の `client.batch` + `IF NOT EXISTS` / `ExpenseStatus` を `packages/shared` に も同時に処理
+- `features/transactions/db.ts` (type=expense/direct/income discriminator、transactions + transaction_events を co-locate)
+- `features/accounts/db.ts` (bank/cash 2 種、archivedAt soft archive、default seed 2 件)
+- `features/categories/db.ts` に `kind` (expense/income) + `archivedAt` 追加、default seed を 9 件に拡張
+- 旧 `features/expenses/db.ts` 削除、`tenant-schema.ts` re-export 更新
+- migration 再生成 (0000_bizarre_shiva)、runner を `client.batch('write')` + `CREATE TABLE / INDEX IF NOT EXISTS` で atomic & retry 安全に
+- `beforeCreateOrganization` の default seed を Account x 2 + Category x 9 に更新
+- code review follow-up: `redactOrgSecrets` の `SECRET_FIELDS` に `schemaVersion` / `lastMigratedAt` 追加 / `TransactionStatus` / `TransactionAction` / `TransactionType` を `packages/shared` に切り出し
+- `db:inspect:tenant` dev tool 追加 (table 一覧 + accounts / categories / transactions 集計、旧 schema 検出にも対応)
 
-**DOD**: 新規サークル作成で Tenant DB に Transaction/Account/Category/TransactionEvent の 4 table が作られ、Account 2 件 + Category 9 件が seed されてる
+**Done**: 新規 org `phase-3.5-85eec126` を作成して 4 table + Account 2 + Category 9 + auto-migration + auto-seed が動くことを確認済み。PR #9 で main に merge。
 
 ### Phase 4: Tenant Shell + 口座 + 設定
 

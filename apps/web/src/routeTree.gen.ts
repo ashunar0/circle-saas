@@ -14,6 +14,7 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as TTenantIdRouteRouteImport } from './routes/t/$tenantId/route'
 import { Route as TTenantIdIndexRouteImport } from './routes/t/$tenantId/index'
 
 const TenantsRoute = TenantsRouteImport.update({
@@ -41,10 +42,15 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TTenantIdIndexRoute = TTenantIdIndexRouteImport.update({
-  id: '/t/$tenantId/',
-  path: '/t/$tenantId/',
+const TTenantIdRouteRoute = TTenantIdRouteRouteImport.update({
+  id: '/t/$tenantId',
+  path: '/t/$tenantId',
   getParentRoute: () => rootRouteImport,
+} as any)
+const TTenantIdIndexRoute = TTenantIdIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => TTenantIdRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
+  '/t/$tenantId': typeof TTenantIdRouteRouteWithChildren
   '/t/$tenantId/': typeof TTenantIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -70,6 +77,7 @@ export interface FileRoutesById {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
+  '/t/$tenantId': typeof TTenantIdRouteRouteWithChildren
   '/t/$tenantId/': typeof TTenantIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +88,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/tenants'
+    | '/t/$tenantId'
     | '/t/$tenantId/'
   fileRoutesByTo: FileRoutesByTo
   to: '/' | '/dashboard' | '/signin' | '/signup' | '/tenants' | '/t/$tenantId'
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/tenants'
+    | '/t/$tenantId'
     | '/t/$tenantId/'
   fileRoutesById: FileRoutesById
 }
@@ -99,7 +109,7 @@ export interface RootRouteChildren {
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
   TenantsRoute: typeof TenantsRoute
-  TTenantIdIndexRoute: typeof TTenantIdIndexRoute
+  TTenantIdRouteRoute: typeof TTenantIdRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -139,15 +149,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/t/$tenantId': {
+      id: '/t/$tenantId'
+      path: '/t/$tenantId'
+      fullPath: '/t/$tenantId'
+      preLoaderRoute: typeof TTenantIdRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/t/$tenantId/': {
       id: '/t/$tenantId/'
-      path: '/t/$tenantId'
+      path: '/'
       fullPath: '/t/$tenantId/'
       preLoaderRoute: typeof TTenantIdIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof TTenantIdRouteRoute
     }
   }
 }
+
+interface TTenantIdRouteRouteChildren {
+  TTenantIdIndexRoute: typeof TTenantIdIndexRoute
+}
+
+const TTenantIdRouteRouteChildren: TTenantIdRouteRouteChildren = {
+  TTenantIdIndexRoute: TTenantIdIndexRoute,
+}
+
+const TTenantIdRouteRouteWithChildren = TTenantIdRouteRoute._addFileChildren(
+  TTenantIdRouteRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -155,7 +184,7 @@ const rootRouteChildren: RootRouteChildren = {
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
   TenantsRoute: TenantsRoute,
-  TTenantIdIndexRoute: TTenantIdIndexRoute,
+  TTenantIdRouteRoute: TTenantIdRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

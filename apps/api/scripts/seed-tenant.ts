@@ -4,7 +4,7 @@ import { createClient } from "@libsql/client";
 import { centralDb } from "../src/lib/db/central";
 import { organization, member } from "../src/lib/auth/schema";
 
-const SAMPLE_EXPENSES = [
+const SAMPLE_TRANSACTIONS = [
   { amount: 3200, description: "新歓コンパ飲食代", catIdx: 0 },
   { amount: 540, description: "コピー用紙", catIdx: 2 },
   { amount: 1200, description: "会場往復交通費", catIdx: 1 },
@@ -40,42 +40,55 @@ async function main() {
   const client = createClient({ url: org.dbUrl, authToken: org.dbToken });
   try {
     const catResult = await client.execute(
-      "SELECT id, name FROM categories ORDER BY sort_order LIMIT 5",
+      "SELECT id, name FROM categories WHERE kind = 'expense' AND archived_at IS NULL ORDER BY sort_order LIMIT 5",
     );
     if (catResult.rows.length === 0) {
       throw new Error(
-        `categories are empty in ${org.slug}; run db:migrate:tenants first`,
+        `expense categories are empty in ${org.slug}; run db:migrate:tenants first`,
       );
     }
 
-    console.log(`Seeding ${SAMPLE_EXPENSES.length} expenses into ${org.slug}...`);
-    for (const sample of SAMPLE_EXPENSES) {
+    const accountResult = await client.execute(
+      "SELECT id, name FROM accounts WHERE archived_at IS NULL ORDER BY created_at LIMIT 1",
+    );
+    if (accountResult.rows.length === 0) {
+      throw new Error(
+        `no active account in ${org.slug}; run db:migrate:tenants first`,
+      );
+    }
+    const account = accountResult.rows[0]!;
+
+    console.log(
+      `Seeding ${SAMPLE_TRANSACTIONS.length} expense transactions into ${org.slug}...`,
+    );
+    for (const sample of SAMPLE_TRANSACTIONS) {
       const cat = catResult.rows[sample.catIdx] ?? catResult.rows[0];
-      const expenseId = randomUUID();
+      const transactionId = randomUUID();
       const daysAgo = Math.floor(Math.random() * 14);
-      const spentAt = Date.now() - 1000 * 60 * 60 * 24 * daysAgo;
+      const occurredAt = Date.now() - 1000 * 60 * 60 * 24 * daysAgo;
 
       await client.execute({
-        sql: `INSERT INTO expenses
-              (id, user_id, amount, spent_at, category_id, description, status)
-              VALUES (?, ?, ?, ?, ?, ?, 'submitted')`,
+        sql: `INSERT INTO transactions
+              (id, type, user_id, amount, occurred_at, account_id, category_id, description, status)
+              VALUES (?, 'expense', ?, ?, ?, ?, ?, ?, 'pending')`,
         args: [
-          expenseId,
+          transactionId,
           seedMember.userId,
           sample.amount,
-          spentAt,
+          occurredAt,
+          account.id as string,
           cat.id as string,
           sample.description,
         ],
       });
       await client.execute({
-        sql: `INSERT INTO expense_events
-              (id, expense_id, actor_id, action, to_status)
-              VALUES (?, ?, ?, 'create', 'submitted')`,
-        args: [randomUUID(), expenseId, seedMember.userId],
+        sql: `INSERT INTO transaction_events
+              (id, transaction_id, actor_id, action, to_status)
+              VALUES (?, ?, ?, 'create', 'pending')`,
+        args: [randomUUID(), transactionId, seedMember.userId],
       });
       console.log(
-        `  + ${sample.description} ${sample.amount}円 (${cat.name as string})`,
+        `  + ${sample.description} ${sample.amount}円 (${cat.name as string} / ${account.name as string})`,
       );
     }
     console.log(`Done.`);

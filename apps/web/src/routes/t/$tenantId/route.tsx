@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
+import { useSidebarOpenState } from "@/lib/use-sidebar-open";
 
 export const Route = createFileRoute("/t/$tenantId")({
   component: TenantShell,
@@ -9,7 +9,8 @@ export const Route = createFileRoute("/t/$tenantId")({
 
 function TenantShell() {
   const { tenantId } = Route.useParams();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useSidebarOpenState();
+
   return (
     <div className="h-screen flex">
       <div className={`shrink-0 overflow-hidden transition-[width] duration-200 ease-out ${sidebarOpen ? "w-60" : "w-0"}`}>

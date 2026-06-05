@@ -20,7 +20,6 @@ import { Route as TTenantIdTransactionsRouteImport } from './routes/t/$tenantId/
 import { Route as TTenantIdSettingsRouteImport } from './routes/t/$tenantId/settings'
 import { Route as TTenantIdMembersRouteImport } from './routes/t/$tenantId/members'
 import { Route as TTenantIdExportRouteImport } from './routes/t/$tenantId/export'
-import { Route as TTenantIdAccountsRouteImport } from './routes/t/$tenantId/accounts'
 
 const TenantsRoute = TenantsRouteImport.update({
   id: '/tenants',
@@ -77,11 +76,6 @@ const TTenantIdExportRoute = TTenantIdExportRouteImport.update({
   path: '/export',
   getParentRoute: () => TTenantIdRouteRoute,
 } as any)
-const TTenantIdAccountsRoute = TTenantIdAccountsRouteImport.update({
-  id: '/accounts',
-  path: '/accounts',
-  getParentRoute: () => TTenantIdRouteRoute,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -90,7 +84,6 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
   '/t/$tenantId': typeof TTenantIdRouteRouteWithChildren
-  '/t/$tenantId/accounts': typeof TTenantIdAccountsRoute
   '/t/$tenantId/export': typeof TTenantIdExportRoute
   '/t/$tenantId/members': typeof TTenantIdMembersRoute
   '/t/$tenantId/settings': typeof TTenantIdSettingsRoute
@@ -103,7 +96,6 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
-  '/t/$tenantId/accounts': typeof TTenantIdAccountsRoute
   '/t/$tenantId/export': typeof TTenantIdExportRoute
   '/t/$tenantId/members': typeof TTenantIdMembersRoute
   '/t/$tenantId/settings': typeof TTenantIdSettingsRoute
@@ -118,7 +110,6 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
   '/t/$tenantId': typeof TTenantIdRouteRouteWithChildren
-  '/t/$tenantId/accounts': typeof TTenantIdAccountsRoute
   '/t/$tenantId/export': typeof TTenantIdExportRoute
   '/t/$tenantId/members': typeof TTenantIdMembersRoute
   '/t/$tenantId/settings': typeof TTenantIdSettingsRoute
@@ -134,7 +125,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tenants'
     | '/t/$tenantId'
-    | '/t/$tenantId/accounts'
     | '/t/$tenantId/export'
     | '/t/$tenantId/members'
     | '/t/$tenantId/settings'
@@ -147,7 +137,6 @@ export interface FileRouteTypes {
     | '/signin'
     | '/signup'
     | '/tenants'
-    | '/t/$tenantId/accounts'
     | '/t/$tenantId/export'
     | '/t/$tenantId/members'
     | '/t/$tenantId/settings'
@@ -161,7 +150,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tenants'
     | '/t/$tenantId'
-    | '/t/$tenantId/accounts'
     | '/t/$tenantId/export'
     | '/t/$tenantId/members'
     | '/t/$tenantId/settings'
@@ -257,18 +245,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TTenantIdExportRouteImport
       parentRoute: typeof TTenantIdRouteRoute
     }
-    '/t/$tenantId/accounts': {
-      id: '/t/$tenantId/accounts'
-      path: '/accounts'
-      fullPath: '/t/$tenantId/accounts'
-      preLoaderRoute: typeof TTenantIdAccountsRouteImport
-      parentRoute: typeof TTenantIdRouteRoute
-    }
   }
 }
 
 interface TTenantIdRouteRouteChildren {
-  TTenantIdAccountsRoute: typeof TTenantIdAccountsRoute
   TTenantIdExportRoute: typeof TTenantIdExportRoute
   TTenantIdMembersRoute: typeof TTenantIdMembersRoute
   TTenantIdSettingsRoute: typeof TTenantIdSettingsRoute
@@ -277,7 +257,6 @@ interface TTenantIdRouteRouteChildren {
 }
 
 const TTenantIdRouteRouteChildren: TTenantIdRouteRouteChildren = {
-  TTenantIdAccountsRoute: TTenantIdAccountsRoute,
   TTenantIdExportRoute: TTenantIdExportRoute,
   TTenantIdMembersRoute: TTenantIdMembersRoute,
   TTenantIdSettingsRoute: TTenantIdSettingsRoute,

@@ -45,6 +45,22 @@ export const auth = betterAuth({
         },
       },
       organizationHooks: {
+        beforeDeleteOrganization: async ({ organization }) => {
+          // provision と symmetric に、central row を消す前に Turso DB を破棄。
+          // 既に存在しない (404) 場合は黙って吸収して central row 削除を続行させる。
+          const dbName = (organization as { dbName?: string }).dbName;
+          if (!dbName) return;
+          try {
+            await deleteTenantDb(dbName);
+          } catch (err) {
+            const msg = err instanceof Error ? err.message : String(err);
+            if (/not found|404/i.test(msg)) {
+              console.warn(`tenant DB ${dbName} already absent on delete`);
+              return;
+            }
+            throw err;
+          }
+        },
         beforeCreateOrganization: async ({ organization }) => {
           if (!organization.slug) {
             throw new Error("organization.slug is required to provision tenant DB");

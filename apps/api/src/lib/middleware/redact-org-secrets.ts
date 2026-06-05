@@ -1,6 +1,12 @@
 import type { MiddlewareHandler } from "hono";
 
-const SECRET_FIELDS = new Set(["dbName", "dbUrl", "dbToken"]);
+const SECRET_FIELDS = new Set([
+  "dbName",
+  "dbUrl",
+  "dbToken",
+  "schemaVersion",
+  "lastMigratedAt",
+]);
 
 function redactSecrets(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(redactSecrets);

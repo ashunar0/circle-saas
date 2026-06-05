@@ -1,39 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowLeftRight, Download, Home, Settings, Users, Wallet } from "lucide-react";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
 import { UserMenu } from "@/components/UserMenu";
 import { useWhoami } from "@/features/tenants/hooks";
-
-const GROUPS = [
-  {
-    label: null,
-    adminOnly: false,
-    items: [
-      { to: "/t/$tenantId", label: "ホーム", icon: Home, exact: true },
-      { to: "/t/$tenantId/transactions", label: "取引", icon: ArrowLeftRight, exact: false },
-    ],
-  },
-  {
-    label: "管理",
-    adminOnly: true,
-    items: [
-      { to: "/t/$tenantId/accounts", label: "口座", icon: Wallet, exact: false },
-      { to: "/t/$tenantId/members", label: "メンバー", icon: Users, exact: false },
-      { to: "/t/$tenantId/settings", label: "設定", icon: Settings, exact: false },
-      { to: "/t/$tenantId/export", label: "エクスポート", icon: Download, exact: false },
-    ],
-  },
-] as const;
+import { NAV_GROUPS } from "@/lib/nav";
 
 type Props = { tenantId: string };
 
 export function Sidebar({ tenantId }: Props) {
   const { data: me } = useWhoami(tenantId);
   const isAdmin = me?.role === "admin" || me?.role === "owner";
-  const groups = GROUPS.filter((g) => !g.adminOnly || isAdmin);
+  const groups = NAV_GROUPS.filter((g) => !g.adminOnly || isAdmin);
 
   return (
-    <aside className="w-60 shrink-0 border-r border-separator flex flex-col">
+    <aside className="w-60 h-full border-r border-separator flex flex-col">
       <div className="p-3">
         <TenantSwitcher tenantId={tenantId} />
       </div>

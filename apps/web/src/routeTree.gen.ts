@@ -16,6 +16,11 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TTenantIdRouteRouteImport } from './routes/t/$tenantId/route'
 import { Route as TTenantIdIndexRouteImport } from './routes/t/$tenantId/index'
+import { Route as TTenantIdTransactionsRouteImport } from './routes/t/$tenantId/transactions'
+import { Route as TTenantIdSettingsRouteImport } from './routes/t/$tenantId/settings'
+import { Route as TTenantIdMembersRouteImport } from './routes/t/$tenantId/members'
+import { Route as TTenantIdExportRouteImport } from './routes/t/$tenantId/export'
+import { Route as TTenantIdAccountsRouteImport } from './routes/t/$tenantId/accounts'
 
 const TenantsRoute = TenantsRouteImport.update({
   id: '/tenants',
@@ -52,6 +57,31 @@ const TTenantIdIndexRoute = TTenantIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => TTenantIdRouteRoute,
 } as any)
+const TTenantIdTransactionsRoute = TTenantIdTransactionsRouteImport.update({
+  id: '/transactions',
+  path: '/transactions',
+  getParentRoute: () => TTenantIdRouteRoute,
+} as any)
+const TTenantIdSettingsRoute = TTenantIdSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => TTenantIdRouteRoute,
+} as any)
+const TTenantIdMembersRoute = TTenantIdMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => TTenantIdRouteRoute,
+} as any)
+const TTenantIdExportRoute = TTenantIdExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => TTenantIdRouteRoute,
+} as any)
+const TTenantIdAccountsRoute = TTenantIdAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => TTenantIdRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -60,6 +90,11 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
   '/t/$tenantId': typeof TTenantIdRouteRouteWithChildren
+  '/t/$tenantId/accounts': typeof TTenantIdAccountsRoute
+  '/t/$tenantId/export': typeof TTenantIdExportRoute
+  '/t/$tenantId/members': typeof TTenantIdMembersRoute
+  '/t/$tenantId/settings': typeof TTenantIdSettingsRoute
+  '/t/$tenantId/transactions': typeof TTenantIdTransactionsRoute
   '/t/$tenantId/': typeof TTenantIdIndexRoute
 }
 export interface FileRoutesByTo {
@@ -68,6 +103,11 @@ export interface FileRoutesByTo {
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
+  '/t/$tenantId/accounts': typeof TTenantIdAccountsRoute
+  '/t/$tenantId/export': typeof TTenantIdExportRoute
+  '/t/$tenantId/members': typeof TTenantIdMembersRoute
+  '/t/$tenantId/settings': typeof TTenantIdSettingsRoute
+  '/t/$tenantId/transactions': typeof TTenantIdTransactionsRoute
   '/t/$tenantId': typeof TTenantIdIndexRoute
 }
 export interface FileRoutesById {
@@ -78,6 +118,11 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/tenants': typeof TenantsRoute
   '/t/$tenantId': typeof TTenantIdRouteRouteWithChildren
+  '/t/$tenantId/accounts': typeof TTenantIdAccountsRoute
+  '/t/$tenantId/export': typeof TTenantIdExportRoute
+  '/t/$tenantId/members': typeof TTenantIdMembersRoute
+  '/t/$tenantId/settings': typeof TTenantIdSettingsRoute
+  '/t/$tenantId/transactions': typeof TTenantIdTransactionsRoute
   '/t/$tenantId/': typeof TTenantIdIndexRoute
 }
 export interface FileRouteTypes {
@@ -89,9 +134,25 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tenants'
     | '/t/$tenantId'
+    | '/t/$tenantId/accounts'
+    | '/t/$tenantId/export'
+    | '/t/$tenantId/members'
+    | '/t/$tenantId/settings'
+    | '/t/$tenantId/transactions'
     | '/t/$tenantId/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/signin' | '/signup' | '/tenants' | '/t/$tenantId'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/signin'
+    | '/signup'
+    | '/tenants'
+    | '/t/$tenantId/accounts'
+    | '/t/$tenantId/export'
+    | '/t/$tenantId/members'
+    | '/t/$tenantId/settings'
+    | '/t/$tenantId/transactions'
+    | '/t/$tenantId'
   id:
     | '__root__'
     | '/'
@@ -100,6 +161,11 @@ export interface FileRouteTypes {
     | '/signup'
     | '/tenants'
     | '/t/$tenantId'
+    | '/t/$tenantId/accounts'
+    | '/t/$tenantId/export'
+    | '/t/$tenantId/members'
+    | '/t/$tenantId/settings'
+    | '/t/$tenantId/transactions'
     | '/t/$tenantId/'
   fileRoutesById: FileRoutesById
 }
@@ -163,14 +229,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TTenantIdIndexRouteImport
       parentRoute: typeof TTenantIdRouteRoute
     }
+    '/t/$tenantId/transactions': {
+      id: '/t/$tenantId/transactions'
+      path: '/transactions'
+      fullPath: '/t/$tenantId/transactions'
+      preLoaderRoute: typeof TTenantIdTransactionsRouteImport
+      parentRoute: typeof TTenantIdRouteRoute
+    }
+    '/t/$tenantId/settings': {
+      id: '/t/$tenantId/settings'
+      path: '/settings'
+      fullPath: '/t/$tenantId/settings'
+      preLoaderRoute: typeof TTenantIdSettingsRouteImport
+      parentRoute: typeof TTenantIdRouteRoute
+    }
+    '/t/$tenantId/members': {
+      id: '/t/$tenantId/members'
+      path: '/members'
+      fullPath: '/t/$tenantId/members'
+      preLoaderRoute: typeof TTenantIdMembersRouteImport
+      parentRoute: typeof TTenantIdRouteRoute
+    }
+    '/t/$tenantId/export': {
+      id: '/t/$tenantId/export'
+      path: '/export'
+      fullPath: '/t/$tenantId/export'
+      preLoaderRoute: typeof TTenantIdExportRouteImport
+      parentRoute: typeof TTenantIdRouteRoute
+    }
+    '/t/$tenantId/accounts': {
+      id: '/t/$tenantId/accounts'
+      path: '/accounts'
+      fullPath: '/t/$tenantId/accounts'
+      preLoaderRoute: typeof TTenantIdAccountsRouteImport
+      parentRoute: typeof TTenantIdRouteRoute
+    }
   }
 }
 
 interface TTenantIdRouteRouteChildren {
+  TTenantIdAccountsRoute: typeof TTenantIdAccountsRoute
+  TTenantIdExportRoute: typeof TTenantIdExportRoute
+  TTenantIdMembersRoute: typeof TTenantIdMembersRoute
+  TTenantIdSettingsRoute: typeof TTenantIdSettingsRoute
+  TTenantIdTransactionsRoute: typeof TTenantIdTransactionsRoute
   TTenantIdIndexRoute: typeof TTenantIdIndexRoute
 }
 
 const TTenantIdRouteRouteChildren: TTenantIdRouteRouteChildren = {
+  TTenantIdAccountsRoute: TTenantIdAccountsRoute,
+  TTenantIdExportRoute: TTenantIdExportRoute,
+  TTenantIdMembersRoute: TTenantIdMembersRoute,
+  TTenantIdSettingsRoute: TTenantIdSettingsRoute,
+  TTenantIdTransactionsRoute: TTenantIdTransactionsRoute,
   TTenantIdIndexRoute: TTenantIdIndexRoute,
 }
 

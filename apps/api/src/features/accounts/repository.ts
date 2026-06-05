@@ -39,19 +39,23 @@ export async function updateAccountName(
   db: TenantDb,
   id: string,
   name: string,
-): Promise<AccountRow | null> {
+): Promise<AccountRow> {
   await db.update(accounts).set({ name }).where(eq(accounts.id, id));
-  return findAccountById(db, id);
+  const row = await findAccountById(db, id);
+  if (!row) throw new Error("account update succeeded but row is missing");
+  return row;
 }
 
 export async function setAccountArchived(
   db: TenantDb,
   id: string,
   archived: boolean,
-): Promise<AccountRow | null> {
+): Promise<AccountRow> {
   await db
     .update(accounts)
     .set({ archivedAt: archived ? new Date() : null })
     .where(eq(accounts.id, id));
-  return findAccountById(db, id);
+  const row = await findAccountById(db, id);
+  if (!row) throw new Error("account update succeeded but row is missing");
+  return row;
 }

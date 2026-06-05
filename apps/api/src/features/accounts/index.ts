@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
-import { HTTPException } from "hono/http-exception";
 import { requireAdmin } from "../../lib/middleware/require-admin";
 import type { TenantContext } from "../../lib/middleware/tenant";
 import { createAccountSchema, updateAccountSchema } from "./schema";
@@ -31,7 +30,6 @@ const accounts = new Hono<TenantContext>()
       c.req.param("id"),
       c.req.valid("json"),
     );
-    if (!account) throw new HTTPException(404, { message: "account not found" });
     return c.json({ account });
   })
   .post("/:id/archive", async (c) => {
@@ -39,7 +37,6 @@ const accounts = new Hono<TenantContext>()
       c.get("tenantDb"),
       c.req.param("id"),
     );
-    if (!account) throw new HTTPException(404, { message: "account not found" });
     return c.json({ account });
   })
   .post("/:id/unarchive", async (c) => {
@@ -47,7 +44,6 @@ const accounts = new Hono<TenantContext>()
       c.get("tenantDb"),
       c.req.param("id"),
     );
-    if (!account) throw new HTTPException(404, { message: "account not found" });
     return c.json({ account });
   });
 

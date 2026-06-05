@@ -23,10 +23,24 @@ function splitStatements(sql: string): string[] {
     .filter(Boolean);
 }
 
+// drizzle-kit が出す CREATE TABLE / CREATE INDEX に IF NOT EXISTS を差し込んで
+// retry 時 (部分適用後の再実行) の "already exists" エラーを抑える。
+// ALTER TABLE 等は単純対応では idempotent にできないので、その時は migration 側で
+// IF NOT EXISTS 相当を組み込む。
+function makeIdempotent(stmt: string): string {
+  return stmt
+    .replace(/^CREATE TABLE (?!IF NOT EXISTS)/i, "CREATE TABLE IF NOT EXISTS ")
+    .replace(
+      /^CREATE (UNIQUE )?INDEX (?!IF NOT EXISTS)/i,
+      (_, unique) =>
+        `CREATE ${unique ?? ""}INDEX IF NOT EXISTS `,
+    );
+}
+
 /**
  * 単一 Tenant DB に未適用の migration を順次 apply し、新しい schemaVersion を返す。
- * fromVersion 未満の migration は skip。失敗時は throw、進んだ分の schemaVersion は
- * 呼び出し側 (Central DB の organization.schemaVersion) で記録する。
+ * fromVersion 未満の migration は skip。各 migration entry は client.batch() で
+ * atomic に流すので、途中失敗時はその entry 全体が rollback される。
  */
 export async function applyTenantMigrations(opts: {
   dbUrl: string;
@@ -47,8 +61,9 @@ export async function applyTenantMigrations(opts: {
         join(MIGRATIONS_DIR, `${entry.tag}.sql`),
         "utf8",
       );
-      for (const statement of splitStatements(sql)) {
-        await client.execute(statement);
+      const statements = splitStatements(sql).map(makeIdempotent);
+      if (statements.length > 0) {
+        await client.batch(statements, "write");
       }
       appliedVersion = entry.idx + 1;
       appliedTags.push(entry.tag);

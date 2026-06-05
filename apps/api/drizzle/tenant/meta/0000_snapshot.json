@@ -1,9 +1,63 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "58f3ff3e-2b1e-4040-b639-ccb6690a0de9",
+  "id": "aa94fab5-f350-4a03-9386-f462de6986b4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
+    "accounts": {
+      "name": "accounts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(cast(unixepoch('subsecond') * 1000 as integer))"
+        }
+      },
+      "indexes": {
+        "accounts_archived_at_idx": {
+          "name": "accounts_archived_at_idx",
+          "columns": [
+            "archived_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
     "categories": {
       "name": "categories",
       "columns": {
@@ -21,6 +75,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
         "sort_order": {
           "name": "sort_order",
           "type": "integer",
@@ -28,6 +89,13 @@
           "notNull": true,
           "autoincrement": false,
           "default": 0
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -39,6 +107,13 @@
         }
       },
       "indexes": {
+        "categories_kind_idx": {
+          "name": "categories_kind_idx",
+          "columns": [
+            "kind"
+          ],
+          "isUnique": false
+        },
         "categories_sort_order_idx": {
           "name": "categories_sort_order_idx",
           "columns": [
@@ -52,8 +127,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "expense_events": {
-      "name": "expense_events",
+    "transaction_events": {
+      "name": "transaction_events",
       "columns": {
         "id": {
           "name": "id",
@@ -62,8 +137,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "expense_id": {
-          "name": "expense_id",
+        "transaction_id": {
+          "name": "transaction_id",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -114,21 +189,21 @@
         }
       },
       "indexes": {
-        "expense_events_expense_id_idx": {
-          "name": "expense_events_expense_id_idx",
+        "transaction_events_transaction_id_idx": {
+          "name": "transaction_events_transaction_id_idx",
           "columns": [
-            "expense_id"
+            "transaction_id"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "expense_events_expense_id_expenses_id_fk": {
-          "name": "expense_events_expense_id_expenses_id_fk",
-          "tableFrom": "expense_events",
-          "tableTo": "expenses",
+        "transaction_events_transaction_id_transactions_id_fk": {
+          "name": "transaction_events_transaction_id_transactions_id_fk",
+          "tableFrom": "transaction_events",
+          "tableTo": "transactions",
           "columnsFrom": [
-            "expense_id"
+            "transaction_id"
           ],
           "columnsTo": [
             "id"
@@ -141,13 +216,20 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "expenses": {
-      "name": "expenses",
+    "transactions": {
+      "name": "transactions",
       "columns": {
         "id": {
           "name": "id",
           "type": "text",
           "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
@@ -165,9 +247,16 @@
           "notNull": true,
           "autoincrement": false
         },
-        "spent_at": {
-          "name": "spent_at",
+        "occurred_at": {
+          "name": "occurred_at",
           "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "account_id": {
+          "name": "account_id",
+          "type": "text",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
@@ -198,8 +287,7 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
-          "default": "'submitted'"
+          "autoincrement": false
         },
         "created_at": {
           "name": "created_at",
@@ -219,32 +307,53 @@
         }
       },
       "indexes": {
-        "expenses_user_id_idx": {
-          "name": "expenses_user_id_idx",
+        "transactions_type_occurred_at_idx": {
+          "name": "transactions_type_occurred_at_idx",
+          "columns": [
+            "type",
+            "occurred_at"
+          ],
+          "isUnique": false
+        },
+        "transactions_user_id_idx": {
+          "name": "transactions_user_id_idx",
           "columns": [
             "user_id"
           ],
           "isUnique": false
         },
-        "expenses_status_idx": {
-          "name": "expenses_status_idx",
+        "transactions_status_idx": {
+          "name": "transactions_status_idx",
           "columns": [
             "status"
           ],
           "isUnique": false
         },
-        "expenses_spent_at_idx": {
-          "name": "expenses_spent_at_idx",
+        "transactions_occurred_at_idx": {
+          "name": "transactions_occurred_at_idx",
           "columns": [
-            "spent_at"
+            "occurred_at"
           ],
           "isUnique": false
         }
       },
       "foreignKeys": {
-        "expenses_category_id_categories_id_fk": {
-          "name": "expenses_category_id_categories_id_fk",
-          "tableFrom": "expenses",
+        "transactions_account_id_accounts_id_fk": {
+          "name": "transactions_account_id_accounts_id_fk",
+          "tableFrom": "transactions",
+          "tableTo": "accounts",
+          "columnsFrom": [
+            "account_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        },
+        "transactions_category_id_categories_id_fk": {
+          "name": "transactions_category_id_categories_id_fk",
+          "tableFrom": "transactions",
           "tableTo": "categories",
           "columnsFrom": [
             "category_id"

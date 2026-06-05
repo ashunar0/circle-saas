@@ -5,6 +5,7 @@ import { createClient } from "@libsql/client";
 import { centralDb } from "../db/central";
 import { deleteTenantDb, provisionTenantDb } from "../db/tenant-provisioning";
 import { applyTenantMigrations } from "../db/tenant-migrate";
+import { seedDefaultAccounts } from "../../features/accounts/seed";
 import { seedDefaultCategories } from "../../features/categories/seed";
 import * as schema from "../db/schema";
 
@@ -59,6 +60,7 @@ export const auth = betterAuth({
               authToken: tenant.dbToken,
             });
             try {
+              await seedDefaultAccounts(seedClient);
               await seedDefaultCategories(seedClient);
             } finally {
               seedClient.close();

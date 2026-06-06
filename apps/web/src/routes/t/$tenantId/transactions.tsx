@@ -1,8 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { requireSession } from "@/lib/auth";
 
 export const Route = createFileRoute("/t/$tenantId/transactions")({
-  beforeLoad: requireSession,
   component: TransactionsPage,
 });
 

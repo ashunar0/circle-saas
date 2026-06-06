@@ -1,9 +1,15 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router";
 import { Header } from "@/components/Header";
 import { Sidebar } from "@/components/Sidebar";
+import { fetchTenantRole, requireSession } from "@/lib/auth";
 import { useSidebarOpenState } from "@/lib/use-sidebar-open";
 
 export const Route = createFileRoute("/t/$tenantId")({
+  beforeLoad: async ({ params }) => {
+    await requireSession();
+    const role = await fetchTenantRole(params.tenantId);
+    return { role };
+  },
   component: TenantShell,
 });
 

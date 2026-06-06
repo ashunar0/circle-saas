@@ -1,8 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { requireSession } from "@/lib/auth";
+import { createFileRoute, redirect } from "@tanstack/react-router";
+import { isAdminRole } from "@/lib/auth";
 
 export const Route = createFileRoute("/t/$tenantId/members")({
-  beforeLoad: requireSession,
+  beforeLoad: ({ context, params }) => {
+    if (!isAdminRole(context.role)) {
+      throw redirect({ to: "/t/$tenantId", params: { tenantId: params.tenantId } });
+    }
+  },
   component: MembersPage,
 });
 

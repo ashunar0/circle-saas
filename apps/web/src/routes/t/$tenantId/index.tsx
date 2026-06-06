@@ -1,9 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { requireSession } from "@/lib/auth";
 import { useWhoami } from "@/features/tenants/hooks";
 
 export const Route = createFileRoute("/t/$tenantId/")({
-  beforeLoad: requireSession,
   component: TenantPage,
 });
 

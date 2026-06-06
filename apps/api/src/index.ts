@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { auth } from "./lib/auth";
 import { redactOrgSecrets } from "./lib/middleware/redact-org-secrets";
 import { resolveTenant } from "./lib/middleware/tenant";
+import accounts from "./features/accounts";
 
 const app = new Hono()
   .use("/api/auth/*", redactOrgSecrets)
@@ -13,7 +14,8 @@ const app = new Hono()
       organizationId: c.get("organizationId"),
       role: c.get("role"),
     }),
-  );
+  )
+  .route("/api/t/:tenantId/accounts", accounts);
 
 export type AppType = typeof app;
 export default app;

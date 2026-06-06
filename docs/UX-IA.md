@@ -39,14 +39,13 @@
 | `/transactions/` | 取引一覧 (date range / type / category / status filter) | ✓ 自分の expense のみ | ✓ 全件 |
 | `/transactions/new` | 新規取引フォーム | ✓ `type=expense` 固定 | ✓ 全 type 選択 |
 | `/transactions/$id` | 取引詳細 (領収書画像 + events log) | ✓ 自分の expense のみ閲覧 + 再提出 | ✓ 全件、承認/差戻/振込済/編集 |
-| `/accounts/` | 口座一覧 + 残高 + 追加/編集/archive | ✗ | ✓ |
 | `/members` | メンバー一覧 + 招待 URL 発行 + role 変更 + 除名 | ✗ | ✓ |
-| `/settings` | サークル名 / 削除 / 脱退 | △ 脱退のみ | ✓ |
+| `/settings` | サークル名 / 口座管理 / 削除 / 脱退 | △ 脱退のみ | ✓ |
 | `/export` | エクスポート (date range picker + zip download) | ✗ | ✓ |
 
-合計 **テナント内 8 画面**。
+合計 **テナント内 7 画面**。口座管理は `/settings` の subsection (Phase 4 で頻度低・固定マスタと判断、独立ページから格下げ)。
 
-> Member は `/accounts` `/members` `/settings` (除く脱退) `/export` にアクセスすると 403。`/transactions/$id` で他人の取引 URL を直叩きしても 403。
+> Member は `/members` `/settings` (除く脱退) `/export` にアクセスすると 403。`/transactions/$id` で他人の取引 URL を直叩きしても 403。
 
 ## 3. 各画面の責務詳細
 
@@ -89,15 +88,7 @@
   - expense + admin + status=approved: 「振込済みにする」ボタン
   - direct/income + admin: 「編集」「削除」ボタン
 
-### 3.5 `/t/$id/accounts/` 口座管理
-
-- Account 一覧: name / kind / 現在残高 (Transaction 集計で導出) / 状態 (active / archived)
-- 「追加」: name + kind を入力
-- 「編集」: name の変更
-- 「archive」: 物理削除せず archived フラグ立て
-- (admin only)
-
-### 3.6 `/t/$id/members` メンバー管理
+### 3.5 `/t/$id/members` メンバー管理
 
 - メンバー一覧: 名前 / メール / role / 加入日
 - 「招待リンクを発行」: 有効期限 (24h / 7d / 30d) と 一度きり/複数回 を選択して URL 生成
@@ -105,14 +96,15 @@
 - 「除名」: 確認ダイアログで除名
 - (admin only)
 
-### 3.7 `/t/$id/settings` サークル設定
+### 3.6 `/t/$id/settings` サークル設定
 
 - サークル名変更
 - ロゴ画像 (v1.1+、MVP は無し)
+- **口座管理** (admin only、独立ページから格下げ): Account 一覧 (name / kind / 現在残高 / active|archived) + 追加 + 編集 (name) + archive (物理削除せず archived フラグ)
 - 「サークルを削除」: 確認入力 (サークル名タイプ) + 削除実行 → Turso 上の Tenant DB も delete
 - 「サークルから脱退」: member 用、admin は自分以外に admin がいない場合は脱退不可
 
-### 3.8 `/t/$id/export` エクスポート
+### 3.7 `/t/$id/export` エクスポート
 
 - date range picker (default 「今月」、shortcut で「直近 30 日」「直近 90 日」「カスタム」)
 - 「含めるもの」: 領収書画像を含む zip / CSV のみ
@@ -133,12 +125,11 @@
 │             │                                       │
 │ ホーム       │                                       │
 │ 取引        │  Content (page-specific)              │
-│ 口座        │                                       │
-│ エクスポート │                                       │
 │             │                                       │
 │ ── admin ── │                                       │
 │ メンバー     │                                       │
-│ 設定        │                                       │
+│ 設定        │   (口座管理は設定の subsection)        │
+│ エクスポート │                                       │
 │             │                                       │
 │ ─────────── │                                       │
 │ [👤 Avatar ▾]│                                      │
@@ -147,7 +138,7 @@
 
 **Sidebar (固定幅 ~240px):**
 - 上部: Tenant 切替 dropdown (現在のサークル名 + 他サークル + 「新規作成」)
-- 中央: ナビリンク。role で出すリンク切替 (member は「メンバー / 設定 / 口座 / エクスポート」非表示)
+- 中央: ナビリンク。role で出すリンク切替 (member は「メンバー / 設定 / エクスポート」非表示)
 - 下部: Avatar dropdown (`/me` / sign out)
 
 **Header (コンテント上のみ):**
@@ -175,7 +166,7 @@
 **Mobile 適応:**
 - Sidebar は **drawer** 化 (☰ ハンバーガーで展開、内容は Desktop sidebar と同じ ─ Tenant 切替 / Nav links / Avatar)
 - Header は slim、ページタイトル + 通知 bell + drawer toggle
-- Bottom tab: 主要 4 リンク (ホーム / 取引 / 口座 / ⋯)、「⋯」で More メニュー (admin: メンバー / 設定 / エクスポート)
+- Bottom tab: 主要 3 リンク (ホーム / 取引 / ⋯)、「⋯」で More メニュー (admin: メンバー / 設定 / エクスポート)
 - FAB: member → 立替申請、admin → 取引作成 (type 選択モーダル)
 
 ## 5. 役割マトリクス
@@ -204,7 +195,7 @@
 | `/` `/signin` `/signup` `/invite/$token` | なし (public) |
 | `/tenants` `/me` | session 必須 |
 | `/t/$tenantId/*` | session + 当該テナントの membership 必須 (resolveTenant middleware で既に実装済み) |
-| `/t/$tenantId/{accounts,members,settings,export}` | 上に加えて role=admin 必須 |
+| `/t/$tenantId/{members,settings,export}` | 上に加えて role=admin 必須 (口座管理は `/settings` の subsection) |
 | `/t/$tenantId/transactions/$id` | 上に加えて、member の場合は `userId = session.userId` 必須 (admin は全件 OK) |
 
 middleware は Phase 4 で `requireAdmin` / `requireOwnerOrAdmin` を追加実装する想定。

@@ -87,12 +87,11 @@ v2+  ─ OCR / 年度引継ぎ / 決算PDF / メール通知 / Activity entity /
 - BE: `requireAdmin` middleware (role guard)
 - FE: Tenant 内 Layout (Slack スタイル Sidebar + Header + Avatar dropdown + mobile drawer)
 - FE: `/t/:tenantId/` ホーム placeholder
-- FE: `/t/:tenantId/accounts` (口座一覧 + 追加 + 編集 + archive)
-- FE: `/t/:tenantId/settings` (サークル名 / 削除 / 脱退)
+- FE: `/t/:tenantId/settings` (サークル名 / 口座管理 (一覧 + 追加 + 編集 + archive) / 削除 / 脱退) ─ 口座は頻度低・固定マスタなので独立ページから格下げ、設定の subsection に統合
 - Tenant 切替 dropdown (Sidebar 上部)
 - sign out
 
-**DOD**: ログイン後にサークルを開くと layout が出る、admin で口座管理 / 設定変更 / サークル削除ができる、member で口座 / 設定にアクセスすると 403
+**DOD**: ログイン後にサークルを開くと layout が出る、admin で `/settings` から口座管理 / サークル名変更 / サークル削除ができる、member で `/settings` にアクセスすると 403 (脱退操作のみ可)
 
 ### Phase 5: Transaction 投稿系 ★ MVP 核心
 
